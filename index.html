@@ -111,7 +111,9 @@
   .nav {
     background:var(--surface); border-bottom:1px solid var(--border);
     padding:0 24px; display:flex; gap:4px; overflow-x:auto;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
+  .nav::-webkit-scrollbar { display:none; }
   .nav-item {
     padding:14px 18px; border:none; background:transparent; color:var(--muted);
     cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; border-bottom:2px solid transparent;
@@ -341,40 +343,118 @@
   }
   .ph-chip:hover { background:rgba(245,158,11,0.25); border-color:var(--accent); }
 
-  @media(max-width:768px) {
-    .content { padding:12px; }
-    .checkin-panel { flex-direction:column; gap:16px; padding:18px; }
-    .clock-display { font-size:32px; min-width:unset; }
-    .form-row { grid-template-columns:1fr; }
-    .salary-grid { grid-template-columns:1fr; }
-    .stats-grid { grid-template-columns:1fr 1fr; gap:10px; }
-    .stat-card .value { font-size:28px; }
-    .topbar { padding:0 14px; height:54px; }
-    .topbar .user-info { display:none; }
-    .logo { font-size:16px; }
-    .nav-item { padding:12px 12px; font-size:13px; }
-    table { font-size:12px; }
-    th, td { padding:10px 10px; }
-    .table-header { flex-direction:column; align-items:flex-start; gap:8px; }
-    .section-title { font-size:18px; }
-    .btn-checkin, .btn-checkout { padding:12px 18px; font-size:14px; }
-    .modal { padding:20px 16px; margin:16px; max-width:calc(100vw - 32px); }
-    .checkin-actions { width:100%; }
-    .btn-checkin, .btn-checkout { flex:1; justify-content:center; }
-    /* Mobile bottom nav */
-    .nav { padding:0 8px; }
-    .topbar-right { gap:8px; }
-    .btn-logout { padding:6px 10px; font-size:12px; }
-    .salary-card { padding:16px; }
-    .leave-form { padding:16px; }
-    .settings-grid { grid-template-columns:1fr !important; }
-  }
   @keyframes splashDot {
     0%,100% { opacity:0.2; transform:translateY(0); }
     50% { opacity:1; transform:translateY(-6px); }
   }
+
+  /* ═══ MOBILE OPTIMIZATION ═══ */
+  @media(max-width:768px) {
+
+    /* LOGIN */
+    .loginBox { padding:32px 20px; margin:16px; border-radius:16px; }
+    .brand h1 { font-size:24px; }
+    .field input, .field select { font-size:16px; padding:14px 12px; } /* 16px prevents iOS zoom */
+    .btn-primary { font-size:16px; padding:16px; min-height:54px; }
+
+    /* TOPBAR */
+    .topbar { padding:10px 14px 10px 14px; height:auto; min-height:54px; align-items:center; }
+    .topbar .user-info { display:none; }
+    .logo { font-size:16px; }
+    .badge { font-size:10px; padding:3px 8px; }
+    .btn-logout { padding:7px 12px; font-size:12px; }
+    .topbar-right { gap:8px; }
+
+    /* NAV — horizontal scroll */
+    .nav { padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    .nav::-webkit-scrollbar { display:none; }
+    .nav-item { padding:12px 10px; font-size:12px; white-space:nowrap; }
+
+    /* CONTENT */
+    .content { padding:14px 12px; }
+    .section-title { font-size:18px; }
+    .section-sub { font-size:12px; }
+
+    /* STATS GRID */
+    .stats-grid { grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+    .stat-card { padding:14px 12px; }
+    .stat-card .value { font-size:26px; }
+    .stat-card .label { font-size:10px; }
+
+    /* CHECK-IN PANEL */
+    .checkin-panel { flex-direction:column; gap:12px; padding:16px; }
+    .clock-display { font-size:36px; min-width:unset; text-align:center; }
+    .clock-date { text-align:center; }
+    .checkin-actions { width:100%; display:flex; gap:10px; }
+    .btn-checkin, .btn-checkout { flex:1; padding:14px 10px; font-size:14px; justify-content:center; }
+
+    /* TABLES — horizontal scroll */
+    .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table { font-size:12px; min-width:500px; }
+    th { padding:10px 10px; font-size:11px; }
+    td { padding:10px 10px; }
+    .table-header { flex-direction:column; align-items:flex-start; gap:8px; padding:14px; }
+    .table-header h3 { font-size:14px; }
+
+    /* FORMS */
+    .form-row { grid-template-columns:1fr; gap:12px; margin-bottom:12px; }
+    .field { margin-bottom:12px; }
+    .field label { font-size:11px; }
+
+    /* MODAL */
+    .modal { padding:20px 16px; margin:12px; max-width:calc(100vw - 24px); border-radius:14px; }
+    .modal h3 { font-size:16px; }
+    .modal-footer { flex-direction:column; gap:8px; }
+    .modal-footer button { width:100%; padding:12px; }
+    .force-co-modal { padding:20px 16px; margin:12px; }
+
+    /* SALARY */
+    .salary-grid { grid-template-columns:1fr; }
+    .salary-card { padding:16px; }
+    .salary-row { font-size:13px; padding:8px 0; }
+    .salary-row.total .amt { font-size:20px; }
+
+    /* LEAVE */
+    .leave-form { padding:16px; }
+    .btn-submit { width:100%; padding:14px; font-size:15px; }
+    .btn-approve, .btn-reject { padding:8px 10px; font-size:12px; }
+
+    /* LETTERS */
+    .letters-grid { grid-template-columns:1fr; gap:12px; }
+    .letter-card { padding:18px; }
+    .letter-modal { margin:8px; border-radius:12px; }
+    .letter-modal-header { padding:14px 16px; flex-direction:column; align-items:flex-start; gap:10px; }
+    .letter-modal-actions { width:100%; display:flex; flex-wrap:wrap; gap:8px; }
+    .letter-modal-actions button { flex:1; min-width:100px; font-size:12px; padding:8px 10px; }
+    .letter-preview { padding:20px 16px; margin:10px; font-size:13px; }
+    .letter-tabs { padding:10px 12px 0; gap:6px; }
+    .letter-tab { font-size:12px; padding:6px 12px; }
+
+    /* SETTINGS */
+    .settings-grid { grid-template-columns:1fr !important; }
+
+    /* BUTTONS */
+    .btn-add { padding:8px 14px; font-size:13px; }
+    .btn-export { padding:8px 14px; font-size:13px; }
+    .btn-letter { padding:9px 14px; font-size:13px; }
+
+    /* GPS BOX */
+    .gps-box { font-size:12px; padding:12px; }
+
+    /* SECTION TITLES */
+    h2.section-title { font-size:18px; margin-bottom:4px; }
+
+    /* TODAY TABLE on dashboard */
+    #todayTable td:nth-child(5) { display:none; } /* hide location on mobile */
+    #todayTable th:nth-child(5) { display:none; }
+  }
+
   @media(max-width:400px) {
-    .stats-grid { grid-template-columns:1fr; }
+    .stats-grid { grid-template-columns:1fr 1fr; }
+    .nav-item { padding:10px 8px; font-size:11px; }
+    .content { padding:10px 8px; }
+    .checkin-panel { padding:12px; }
+    .clock-display { font-size:30px; }
   }
 </style>
 </head>
@@ -2124,91 +2204,4 @@ function showNotif(msg, type='success') {
   const n=document.getElementById('notif');
   n.textContent=msg; n.className='notif '+(type||'');
   void n.offsetWidth; n.classList.add('show');
-  setTimeout(()=>n.classList.remove('show'),3000);
-}
-
-// ═══════════ FIREBASE SYNC ═══════════
-async function saveToFirebase() {
-  if(!db) return; // offline mode — skip
-  try {
-    await db.collection('nitya_data').doc('main').set({
-      employees: state.employees,
-      attendance: state.attendance,
-      leaves: state.leaves,
-      company: state.company,
-      updatedAt: new Date().toISOString()
-    });
-  } catch(e) { console.error('Firebase save error:', e); }
-}
-
-async function loadFromFirebase() {
-  if(!db) {
-    console.warn('Firebase not available — running offline');
-    return;
-  }
-  try {
-    showLoadingOverlay(true);
-    const doc = await db.collection('nitya_data').doc('main').get();
-    if(doc.exists) {
-      const data = doc.data();
-      if(data.employees && data.employees.length) state.employees = data.employees;
-      if(data.attendance) state.attendance = data.attendance;
-      if(data.leaves) state.leaves = data.leaves;
-      if(data.company) state.company = { ...state.company, ...data.company };
-      showNotif('Data loaded from cloud ☁️','success');
-    }
-    showLoadingOverlay(false);
-  } catch(e) {
-    console.error('Firebase load error:', e);
-    showLoadingOverlay(false);
-    showNotif('Cloud sync error — working offline','error');
-  }
-}
-
-function showLoadingOverlay(show) {
-  let el = document.getElementById('loadingOverlay');
-  if(!el) {
-    el = document.createElement('div');
-    el.id = 'loadingOverlay';
-    el.innerHTML = '<div style="text-align:center"><div style="font-size:40px;margin-bottom:14px">🔥</div><div style="font-size:18px;color:#f59e0b;font-family:Syne,sans-serif;font-weight:700">Nitya HR</div><div style="font-size:13px;color:#6b6b80;margin-top:6px">Loading data from cloud...</div></div>';
-    el.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,15,0.96);z-index:9999;display:flex;align-items:center;justify-content:center;';
-    document.body.appendChild(el);
-  }
-  el.style.display = show ? 'flex' : 'none';
-}
-
-function autoSave() {
-  saveToFirebase();
-}
-
-// Init date on topbar
-document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('en-IN');
-
-// ── Splash Screen → Firebase Load → Show Login ──
-window.addEventListener('load', async function() {
-  const splashMin = new Promise(res => setTimeout(res, 2200));
-  const firebaseLoad = loadFromFirebase();
-  await Promise.all([splashMin, firebaseLoad]);
-  // Fade out splash
-  const splash = document.getElementById('splashScreen');
-  splash.style.transition = 'opacity 0.5s ease';
-  splash.style.opacity = '0';
-  setTimeout(() => {
-    splash.style.display = 'none';
-    const loginScreen = document.getElementById('loginScreen');
-    loginScreen.style.display = 'flex';
-    const params = new URLSearchParams(window.location.search);
-    if(params.get('mode') === 'admin') {
-      // Admin mode — show both tabs
-      document.getElementById('loginTabs').style.display = 'flex';
-      switchRole('admin');
-    } else {
-      // Default — Employee only, no tabs shown
-      switchRole('employee');
-    }
-  }, 500);
-});
-
-</script>
-</body>
-</html>
+  setTimeou
