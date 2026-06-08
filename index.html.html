@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nitya Attendance — Smart HR</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  let db = null;
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyDEYbAksOMTPRBQMvL0pS_6-T-YsQojIOU",
+      authDomain: "nitya-hr.firebaseapp.com",
+      projectId: "nitya-hr",
+      storageBucket: "nitya-hr.firebasestorage.app",
+      messagingSenderId: "92745023180",
+      appId: "1:92745023180:web:3771aa8982cbcee4568c69"
+    };
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    console.log('Firebase connected ✓');
+  } catch(e) {
+    console.warn('Firebase not available — offline mode:', e.message);
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a38;
+    --accent: #f59e0b;
+    --accent2: #10b981;
+    --danger: #ef4444;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --present: #10b981;
+    --absent: #ef4444;
+    --leave: #f59e0b;
+    --half: #8b5cf6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+  h1,h2,h3,h4 { font-family:'Syne',sans-serif; }
+
+  /* LOGIN */
+  #loginScreen {
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; background:var(--bg);
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(245,158,11,0.08) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(16,185,129,0.06) 0%, transparent 50%);
+  }
+  .loginBox {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:48px 40px; width:100%; max-width:420px;
+    box-shadow: 0 0 60px rgba(245,158,11,0.08);
+  }
+  .brand { text-align:center; margin-bottom:36px; }
+  .brand h1 { font-size:28px; color:var(--accent); letter-spacing:-0.5px; }
+  .brand p { color:var(--muted); font-size:13px; margin-top:4px; }
+  .tabs { display:flex; gap:8px; margin-bottom:28px; background:var(--card); border-radius:10px; padding:4px; }
+  .tab { flex:1; padding:8px; border:none; background:transparent; color:var(--muted);
+    border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; transition:all .2s; }
+  .tab.active { background:var(--accent); color:#000; font-weight:600; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.5px; text-transform:uppercase; }
+  .field input, .field select {
+    width:100%; padding:12px 14px; background:var(--card); border:1px solid var(--border);
+    border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px;
+    outline:none; transition:border .2s;
+  }
+  .field input:focus, .field select:focus { border-color:var(--accent); }
+  .btn-primary {
+    width:100%; padding:14px; background:var(--accent); color:#000; border:none;
+    border-radius:10px; font-family:'Syne',sans-serif; font-size:15px; font-weight:700;
+    cursor:pointer; transition:all .2s; letter-spacing:.3px;
+  }
+  .btn-primary:hover { background:#d97706; transform:translateY(-1px); }
+  .hint { text-align:center; margin-top:20px; font-size:12px; color:var(--muted); }
+
+  /* MAIN APP */
+  #app { display:none; }
+  .topbar {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100;
+  }
+  .topbar-left { display:flex; align-items:center; gap:16px; }
+  .logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--accent); }
+  .badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge.admin { background:rgba(245,158,11,0.15); color:var(--accent); }
+  .badge.employee { background:rgba(16,185,129,0.15); color:var(--accent2); }
+  .topbar-right { display:flex; align-items:center; gap:12px; }
+  .user-info { text-align:right; }
+  .user-info strong { display:block; font-size:14px; }
+  .user-info span { font-size:12px; color:var(--muted); }
+  .btn-logout { padding:7px 16px; background:transparent; border:1px solid var(--border);
+    color:var(--muted); border-radius:8px; cursor:pointer; font-size:13px; transition:all .2s; }
+  .btn-logout:hover { border-color:var(--danger); color:var(--danger); }
+
+  /* NAV */
+  .nav {
+    background:var(--surface); border-bottom:1px solid var(--border);
+    padding:0 24px; display:flex; gap:4px; overflow-x:auto;
+  }
+  .nav-item {
+    padding:14px 18px; border:none; background:transparent; color:var(--muted);
+    cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; border-bottom:2px solid transparent;
+    white-space:nowrap; transition:all .2s;
+  }
+  .nav-item.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .nav-item:hover { color:var(--text); }
+
+  /* CONTENT */
+  .content { padding:28px 24px; max-width:1200px; margin:0 auto; }
+
+  /* PAGE */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* CARDS */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+  .stat-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px;
+    position:relative; overflow:hidden;
+  }
+  .stat-card::before {
+    content:''; position:absolute; top:0; right:0; width:60px; height:60px;
+    border-radius:0 14px 0 60px; opacity:.15;
+  }
+  .stat-card.green::before { background:var(--present); }
+  .stat-card.red::before { background:var(--absent); }
+  .stat-card.yellow::before { background:var(--leave); }
+  .stat-card.purple::before { background:var(--half); }
+  .stat-card .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .stat-card .value { font-family:'Syne',sans-serif; font-size:36px; font-weight:800; margin:6px 0 2px; }
+  .stat-card.green .value { color:var(--present); }
+  .stat-card.red .value { color:var(--absent); }
+  .stat-card.yellow .value { color:var(--leave); }
+  .stat-card.purple .value { color:var(--half); }
+  .stat-card .sub { font-size:12px; color:var(--muted); }
+
+  /* CHECKIN SECTION */
+  .checkin-panel {
+    background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px;
+    margin-bottom:24px; display:flex; gap:28px; align-items:center; flex-wrap:wrap;
+  }
+  .clock-display { font-family:'Syne',sans-serif; font-size:48px; font-weight:800; color:var(--accent); min-width:200px; }
+  .clock-date { font-size:14px; color:var(--muted); margin-top:4px; }
+  .checkin-actions { display:flex; gap:12px; flex-wrap:wrap; }
+  .btn-checkin, .btn-checkout, .btn-break {
+    padding:14px 28px; border-radius:12px; border:none; font-family:'Syne',sans-serif;
+    font-size:15px; font-weight:700; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:8px;
+  }
+  .btn-checkin { background:var(--present); color:#fff; }
+  .btn-checkin:hover { background:#059669; transform:translateY(-2px); }
+  .btn-checkout { background:var(--danger); color:#fff; }
+  .btn-checkout:hover { background:#dc2626; transform:translateY(-2px); }
+  .btn-break { background:var(--surface); color:var(--muted); border:1px solid var(--border); }
+  .btn-break:hover { border-color:var(--half); color:var(--half); }
+  .btn-checkin:disabled, .btn-checkout:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+  .status-pill {
+    padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; display:inline-block;
+  }
+  .status-pill.checked-in { background:rgba(16,185,129,0.15); color:var(--present); }
+  .status-pill.checked-out { background:rgba(239,68,68,0.15); color:var(--danger); }
+  .status-pill.not-started { background:rgba(107,107,128,0.2); color:var(--muted); }
+
+  /* TABLE */
+  .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .table-header { padding:18px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  .table-header h3 { font-size:16px; }
+  .search-input {
+    padding:8px 14px; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-size:13px; outline:none; width:220px;
+  }
+  .search-input:focus { border-color:var(--accent); }
+  table { width:100%; border-collapse:collapse; }
+  th { background:var(--surface); padding:12px 16px; text-align:left; font-size:12px;
+    color:var(--muted); text-transform:uppercase; letter-spacing:.5px; font-weight:500; }
+  td { padding:14px 16px; border-top:1px solid var(--border); font-size:14px; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .dot.present { background:var(--present); }
+  .dot.absent { background:var(--absent); }
+  .dot.leave { background:var(--leave); }
+  .dot.half { background:var(--half); }
+
+  /* SALARY */
+  .salary-card {
+    background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px;
+    margin-bottom:16px;
+  }
+  .salary-row { display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .salary-row:last-child { border:none; }
+  .salary-row .lbl { color:var(--muted); }
+  .salary-row .amt { font-weight:600; }
+  .salary-row.total .lbl { font-family:'Syne',sans-serif; font-size:16px; color:var(--text); }
+  .salary-row.total .amt { font-family:'Syne',sans-serif; font-size:24px; color:var(--accent); font-weight:800; }
+  .salary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+
+  /* LEAVE */
+  .leave-form { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:20px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .btn-submit {
+    padding:11px 28px; background:var(--accent); color:#000; border:none;
+    border-radius:10px; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s;
+  }
+  .btn-submit:hover { background:#d97706; }
+  .btn-approve { padding:6px 14px; background:rgba(16,185,129,0.15); color:var(--present); border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
+  .btn-reject { padding:6px 14px; background:rgba(239,68,68,0.15); color:var(--danger); border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
+  .leave-status { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .leave-status.pending { background:rgba(245,158,11,0.15); color:var(--leave); }
+  .leave-status.approved { background:rgba(16,185,129,0.15); color:var(--present); }
+  .leave-status.rejected { background:rgba(239,68,68,0.15); color:var(--danger); }
+
+  /* GPS */
+  .gps-box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-top:12px; font-size:13px; }
+  .gps-box strong { color:var(--accent2); }
+
+  /* NOTIFICATION */
+  .notif {
+    position:fixed; bottom:24px; right:24px; padding:14px 20px;
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    font-size:14px; z-index:999; transform:translateY(80px); opacity:0;
+    transition:all .3s; box-shadow:0 8px 32px rgba(0,0,0,0.4); max-width:320px;
+  }
+  .notif.show { transform:translateY(0); opacity:1; }
+  .notif.success { border-color:var(--present); }
+  .notif.error { border-color:var(--danger); }
+
+  /* EXPORT BTN */
+  .btn-export { padding:9px 18px; background:transparent; border:1px solid var(--accent);
+    color:var(--accent); border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; transition:all .2s; }
+  .btn-export:hover { background:rgba(245,158,11,0.1); }
+
+  /* EMPLOYEE MGMT */
+  .btn-add { padding:9px 18px; background:var(--accent2); color:#fff; border:none;
+    border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; transition:all .2s; }
+  .btn-add:hover { background:#059669; }
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200;
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px; width:100%; max-width:480px; }
+  .modal h3 { margin-bottom:20px; font-size:20px; }
+  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .btn-cancel { padding:10px 20px; background:transparent; border:1px solid var(--border);
+    color:var(--muted); border-radius:8px; cursor:pointer; }
+
+  /* SECTION TITLE */
+  .section-title { font-size:22px; font-weight:800; margin-bottom:6px; }
+  .section-sub { font-size:14px; color:var(--muted); margin-bottom:24px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* LETTER MODAL */
+  .letter-modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .letter-modal-overlay.open { display:flex; }
+  .letter-modal {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    width:100%; max-width:700px; max-height:90vh; overflow-y:auto;
+  }
+  .letter-modal-header {
+    padding:20px 24px; border-bottom:1px solid var(--border);
+    display:flex; justify-content:space-between; align-items:center; position:sticky; top:0;
+    background:var(--surface); z-index:10;
+  }
+  .letter-modal-header h3 { font-size:18px; }
+  .letter-modal-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .letter-preview {
+    background:#fff; color:#111; padding:40px 48px; margin:20px;
+    border-radius:8px; font-family:'Times New Roman', serif; font-size:14px; line-height:1.7;
+    min-height:600px;
+  }
+  .letter-preview .ltr-header { text-align:center; border-bottom:2px solid #1a1a24; padding-bottom:16px; margin-bottom:24px; }
+  .letter-preview .ltr-company { font-size:22px; font-weight:700; color:#b45309; letter-spacing:1px; }
+  .letter-preview .ltr-tagline { font-size:11px; color:#666; margin-top:2px; }
+  .letter-preview .ltr-address { font-size:11px; color:#555; margin-top:4px; }
+  .letter-preview .ltr-ref { color:#555; font-size:13px; margin-bottom:16px; }
+  .letter-preview h4 { text-align:center; text-decoration:underline; font-size:15px; margin:20px 0 16px; letter-spacing:1px; }
+  .letter-preview p { margin-bottom:14px; text-align:justify; }
+  .letter-preview .ltr-sign { margin-top:40px; }
+  .letter-preview .ltr-sign-name { font-weight:700; margin-top:48px; border-top:1px solid #333; padding-top:6px; display:inline-block; }
+  .letter-preview table { width:100%; border-collapse:collapse; margin:16px 0; }
+  .letter-preview table td { padding:6px 10px; border:1px solid #ddd; font-size:13px; }
+  .letter-preview table td:first-child { font-weight:600; width:40%; background:#f9f9f9; }
+
+  /* FORCE CHECKOUT MODAL */
+  .force-co-modal {
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px; width:100%; max-width:380px;
+  }
+
+  /* LETTER TABS */
+  .letter-tabs { display:flex; gap:8px; padding:16px 20px 0; }
+  .letter-tab { padding:8px 20px; border:1px solid var(--border); background:transparent; color:var(--muted);
+    border-radius:8px 8px 0 0; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; transition:all .2s; }
+  .letter-tab.active { background:var(--card); color:var(--accent); border-bottom-color:var(--card); border-color:var(--accent); }
+
+  /* EMP LETTERS PAGE */
+  .letters-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+  .letter-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .letter-card .lc-icon { font-size:32px; }
+  .letter-card .lc-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; }
+  .letter-card .lc-sub { font-size:13px; color:var(--muted); }
+  .letter-card-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn-letter { padding:8px 16px; border-radius:8px; border:none; cursor:pointer; font-size:13px; font-weight:600; transition:all .2s; }
+  .btn-letter.view { background:rgba(245,158,11,0.15); color:var(--accent); }
+  .btn-letter.view:hover { background:rgba(245,158,11,0.25); }
+  .btn-letter.download { background:rgba(16,185,129,0.15); color:var(--accent2); }
+  .btn-letter.download:hover { background:rgba(16,185,129,0.25); }
+  .btn-letter.gmail { background:rgba(239,68,68,0.15); color:#ef4444; }
+  .btn-letter.gmail:hover { background:rgba(239,68,68,0.25); }
+
+  /* PLACEHOLDER CHIPS */
+  .ph-chip {
+    display:inline-block; padding:4px 10px; background:rgba(245,158,11,0.12);
+    border:1px solid rgba(245,158,11,0.3); border-radius:20px; font-size:11px;
+    color:var(--accent); cursor:pointer; font-family:'DM Sans',sans-serif;
+    transition:all .15s; user-select:none;
+  }
+  .ph-chip:hover { background:rgba(245,158,11,0.25); border-color:var(--accent); }
+
+  @media(max-width:768px) {
+    .content { padding:12px; }
+    .checkin-panel { flex-direction:column; gap:16px; padding:18px; }
+    .clock-display { font-size:32px; min-width:unset; }
+    .form-row { grid-template-columns:1fr; }
+    .salary-grid { grid-template-columns:1fr; }
+    .stats-grid { grid-template-columns:1fr 1fr; gap:10px; }
+    .stat-card .value { font-size:28px; }
+    .topbar { padding:0 14px; height:54px; }
+    .topbar .user-info { display:none; }
+    .logo { font-size:16px; }
+    .nav-item { padding:12px 12px; font-size:13px; }
+    table { font-size:12px; }
+    th, td { padding:10px 10px; }
+    .table-header { flex-direction:column; align-items:flex-start; gap:8px; }
+    .section-title { font-size:18px; }
+    .btn-checkin, .btn-checkout { padding:12px 18px; font-size:14px; }
+    .modal { padding:20px 16px; margin:16px; max-width:calc(100vw - 32px); }
+    .checkin-actions { width:100%; }
+    .btn-checkin, .btn-checkout { flex:1; justify-content:center; }
+    /* Mobile bottom nav */
+    .nav { padding:0 8px; }
+    .topbar-right { gap:8px; }
+    .btn-logout { padding:6px 10px; font-size:12px; }
+    .salary-card { padding:16px; }
+    .leave-form { padding:16px; }
+    .settings-grid { grid-template-columns:1fr !important; }
+  }
+  @media(max-width:400px) {
+    .stats-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="loginBox">
+    <div class="brand">
+      <h1>Nitya HR</h1>
+      <p>Attendance & Payroll Management</p>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchRole('admin')">Admin Login</button>
+      <button class="tab" onclick="switchRole('employee')">Employee Login</button>
+    </div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" />
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Sign In →</button>
+    <p class="hint">Admin: admin / admin123 &nbsp;|&nbsp; Employee: emp1 / emp123</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo">Nitya HR</div>
+      <span class="badge" id="roleBadge">Admin</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-info">
+        <strong id="topbarName">Admin</strong>
+        <span id="topbarDate"></span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="nav" id="navBar"></div>
+
+  <div class="content">
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <h2 class="section-title">Dashboard</h2>
+      <p class="section-sub" id="dashGreet">Good morning!</p>
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="label">Present Today</div>
+          <div class="value" id="statPresent">0</div>
+          <div class="sub">employees checked in</div>
+        </div>
+        <div class="stat-card red">
+          <div class="label">Absent Today</div>
+          <div class="value" id="statAbsent">0</div>
+          <div class="sub">not marked yet</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="label">On Leave</div>
+          <div class="value" id="statLeave">0</div>
+          <div class="sub">approved leaves</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="label">Pending Leaves</div>
+          <div class="value" id="statPending">0</div>
+          <div class="sub">awaiting approval</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>Today's Attendance</h3>
+        </div>
+        <table>
+          <thead><tr><th>Employee</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Location</th></tr></thead>
+          <tbody id="todayTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE (Employee) -->
+    <div class="page" id="page-attendance">
+      <h2 class="section-title">My Attendance</h2>
+      <p class="section-sub">Mark your daily attendance with GPS</p>
+      <div class="checkin-panel">
+        <div>
+          <div class="clock-display" id="liveClock">--:--:--</div>
+          <div class="clock-date" id="liveDate"></div>
+          <div style="margin-top:10px">
+            Status: <span class="status-pill not-started" id="attendStatus">Not Started</span>
+          </div>
+        </div>
+        <div>
+          <div class="checkin-actions">
+            <button class="btn-checkin" id="btnCheckin" onclick="doCheckIn()">✓ Check In</button>
+            <button class="btn-checkout" id="btnCheckout" onclick="doCheckOut()" disabled>✗ Check Out</button>
+          </div>
+          <div class="gps-box" id="gpsInfo">
+            <strong>📍 GPS:</strong> <span id="gpsText">Click Check In to capture location</span>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><h3>My Attendance History</h3></div>
+        <table>
+          <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
+          <tbody id="myAttendTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LEAVE -->
+    <div class="page" id="page-leave">
+      <h2 class="section-title">Leave Management</h2>
+      <p class="section-sub" id="leaveSubtitle">Apply for leave</p>
+      <div id="leaveApplySection">
+        <div class="leave-form">
+          <h3 style="margin-bottom:16px;font-size:16px;">Apply for Leave</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>Leave Type</label>
+              <select id="leaveType">
+                <option>Sick Leave</option>
+                <option>Casual Leave</option>
+                <option>Earned Leave</option>
+                <option>Unpaid Leave</option>
+              </select>
+            </div>
+            <div class="field" id="empSelectWrap" style="display:none">
+              <label>Employee</label>
+              <select id="leaveEmpSelect"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>From Date</label>
+              <input type="date" id="leaveFrom" />
+            </div>
+            <div class="field">
+              <label>To Date</label>
+              <input type="date" id="leaveTo" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Reason</label>
+            <input type="text" id="leaveReason" placeholder="Brief reason for leave" />
+          </div>
+          <button class="btn-submit" onclick="applyLeave()">Submit Request</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><h3>Leave Requests</h3></div>
+        <table>
+          <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th id="actionCol"></th></tr></thead>
+          <tbody id="leaveTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALARY -->
+    <div class="page" id="page-salary">
+      <h2 class="section-title">Salary Calculation</h2>
+      <p class="section-sub">Monthly payroll based on attendance</p>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <div class="field" style="margin:0">
+          <select id="salaryMonth" onchange="renderSalary()">
+            <option value="5">June 2025</option>
+            <option value="4">May 2025</option>
+            <option value="3">April 2025</option>
+          </select>
+        </div>
+        <button class="btn-export" onclick="exportSalary()">⬇ Export CSV</button>
+      </div>
+      <div class="salary-grid" id="salaryGrid"></div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <h2 class="section-title">Reports</h2>
+      <p class="section-sub">Monthly attendance summary</p>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+        <div class="field" style="margin:0">
+          <select id="reportMonth" onchange="renderReports()">
+            <option value="5">June 2025</option>
+            <option value="4">May 2025</option>
+            <option value="3">April 2025</option>
+          </select>
+        </div>
+        <button class="btn-export" onclick="exportReport()">⬇ Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><h3>Monthly Summary</h3></div>
+        <table>
+          <thead><tr><th>Employee</th><th>Working Days</th><th>Present</th><th>Absent</th><th>Leave</th><th>Attendance %</th></tr></thead>
+          <tbody id="reportTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MARK ATTENDANCE (Admin) -->
+    <div class="page" id="page-markattend">
+      <h2 class="section-title">Mark Attendance</h2>
+      <p class="section-sub">Manually mark attendance for any employee</p>
+      <div class="leave-form" style="margin-bottom:20px">
+        <div class="form-row">
+          <div class="field">
+            <label>Select Employee</label>
+            <select id="maEmpSelect"></select>
+          </div>
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="maDate" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Status</label>
+            <select id="maStatus">
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="half">Half Day</option>
+              <option value="leave">Leave</option>
+            </select>
+          </div>
+          <div class="field" id="maTimeWrap">
+            <label>Check In Time</label>
+            <input type="time" id="maCheckIn" value="09:00" />
+          </div>
+        </div>
+        <div class="form-row" id="maCheckOutWrap">
+          <div class="field">
+            <label>Check Out Time</label>
+            <input type="time" id="maCheckOut" value="18:00" />
+          </div>
+          <div class="field">
+            <label>Note (optional)</label>
+            <input type="text" id="maNote" placeholder="e.g. WFH, Field visit" />
+          </div>
+        </div>
+        <button class="btn-submit" onclick="markAttendance()">&#10003; Save Attendance</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>Recent Attendance Records</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="maFilterEmp" onchange="renderMarkAttendTable()" style="padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;">
+              <option value="all">All Employees</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Employee</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Note</th><th>Action</th></tr></thead>
+          <tbody id="maTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EMPLOYEES (Admin only) -->
+    <div class="page" id="page-employees">
+      <h2 class="section-title">Employees</h2>
+      <p class="section-sub">Manage your team</p>
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>Team Members</h3>
+          <button class="btn-add" onclick="openAddModal()">+ Add Employee</button>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Monthly Salary</th><th>Join Date</th><th>Action</th></tr></thead>
+          <tbody id="empTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MY LETTERS (Employee) -->
+    <div class="page" id="page-letters">
+      <h2 class="section-title">My Letters</h2>
+      <p class="section-sub">Your official documents from Nitya Marketing Management</p>
+      <div class="letters-grid" id="lettersGrid"></div>
+    </div>
+
+    <!-- COMPANY SETTINGS (Admin) -->
+    <div class="page" id="page-settings">
+      <h2 class="section-title">⚙️ Company Settings</h2>
+      <p class="section-sub">Customize your letterhead, logo, signature & company details</p>
+
+      <!-- LETTERHEAD PREVIEW STRIP -->
+      <div id="lhPreviewStrip" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Live Letterhead Preview</div>
+        <div id="lhPreviewBox" style="background:#fff;color:#111;border-radius:8px;padding:24px 32px;font-family:'Times New Roman',serif;"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="settings-grid">
+
+        <!-- LEFT: Company Info -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;">
+          <h3 style="font-size:15px;margin-bottom:18px;color:var(--accent)">🏢 Company Information</h3>
+          <div class="field"><label>Company Name</label><input type="text" id="sCompName" placeholder="Nitya Marketing Management" oninput="previewLetterhead()" /></div>
+          <div class="field"><label>Tagline / Slogan</label><input type="text" id="sTagline" placeholder="Excellence in Marketing..." oninput="previewLetterhead()" /></div>
+          <div class="field"><label>Address</label><input type="text" id="sAddress" placeholder="Mumbai, Maharashtra" oninput="previewLetterhead()" /></div>
+          <div class="field"><label>HR Email</label><input type="email" id="sEmail" placeholder="hr@company.com" oninput="previewLetterhead()" /></div>
+          <div class="field"><label>Phone</label><input type="text" id="sPhone" placeholder="+91 XXXXX XXXXX" oninput="previewLetterhead()" /></div>
+          <div class="field"><label>Website</label><input type="text" id="sWebsite" placeholder="www.company.com" oninput="previewLetterhead()" /></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="field"><label>CIN (optional)</label><input type="text" id="sCin" placeholder="U12345MH..." oninput="previewLetterhead()" /></div>
+            <div class="field"><label>GSTIN (optional)</label><input type="text" id="sGstin" placeholder="27XXXXX..." oninput="previewLetterhead()" /></div>
+          </div>
+          <div class="field">
+            <label>Letterhead Accent Color</label>
+            <div style="display:flex;gap:10px;align-items:center">
+              <input type="color" id="sColor" value="#b45309" oninput="previewLetterhead()" style="width:48px;height:36px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;padding:2px;" />
+              <span id="sColorHex" style="font-size:13px;color:var(--muted)">#b45309</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Logo + Signature -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;">
+          <h3 style="font-size:15px;margin-bottom:18px;color:var(--accent)">🖼️ Logo & Signature</h3>
+
+          <!-- Logo Upload -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Company Logo</div>
+            <div id="logoPreviewWrap" style="width:160px;height:70px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;background:var(--bg);cursor:pointer" onclick="document.getElementById('logoFileInput').click()">
+              <img id="logoPreviewImg" src="" style="max-width:150px;max-height:64px;display:none;object-fit:contain;" />
+              <span id="logoPlaceholder" style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Click to upload<br>logo (PNG/JPG)</span>
+            </div>
+            <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)" />
+            <div style="display:flex;gap:8px;">
+              <button class="btn-letter view" onclick="document.getElementById('logoFileInput').click()">📁 Upload Logo</button>
+              <button class="btn-letter" style="background:rgba(239,68,68,0.1);color:var(--danger)" onclick="removeLogo()">✕ Remove</button>
+            </div>
+          </div>
+
+          <!-- Signature Upload -->
+          <div>
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Authorized Signature</div>
+            <div id="signPreviewWrap" style="width:200px;height:80px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;background:var(--bg);cursor:pointer" onclick="document.getElementById('signFileInput').click()">
+              <img id="signPreviewImg" src="" style="max-width:190px;max-height:74px;display:none;object-fit:contain;" />
+              <span id="signPlaceholder" style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Click to upload<br>signature image</span>
+            </div>
+            <input type="file" id="signFileInput" accept="image/*" style="display:none" onchange="handleSignUpload(event)" />
+            <div style="display:flex;gap:8px;">
+              <button class="btn-letter view" onclick="document.getElementById('signFileInput').click()">📁 Upload Signature</button>
+              <button class="btn-letter" style="background:rgba(239,68,68,0.1);color:var(--danger)" onclick="removeSign()">✕ Remove</button>
+            </div>
+          </div>
+
+          <!-- Signatory details -->
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent)">✍️ Signatory Details</h3>
+            <div class="field"><label>Signatory Name</label><input type="text" id="sSignName" placeholder="e.g. Rajesh Kumar" oninput="previewLetterhead()" /></div>
+            <div class="field"><label>Signatory Designation</label><input type="text" id="sSignDesig" placeholder="e.g. Managing Director" oninput="previewLetterhead()" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Letter Terms -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;">
+        <h3 style="font-size:15px;margin-bottom:18px;color:var(--accent)">📋 Letter Default Terms</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+          <div class="field"><label>Work Hours</label><input type="text" id="sWorkHours" placeholder="9:00 AM – 6:30 PM" oninput="previewLetterhead()" /></div>
+          <div class="field"><label>Probation Period</label><input type="text" id="sProbation" placeholder="3 Months" oninput="previewLetterhead()" /></div>
+          <div class="field"><label>Notice Period</label><input type="text" id="sNotice" placeholder="30 Days" oninput="previewLetterhead()" /></div>
+        </div>
+      </div>
+
+      <!-- LETTER TEMPLATE EDITOR -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+          <h3 style="font-size:15px;color:var(--accent)">✏️ Letter Template Editor</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="letter-tab active" id="tplOfferTab" onclick="switchTplTab('offer')" style="font-size:12px;padding:6px 14px;">Offer Letter</button>
+            <button class="letter-tab" id="tplAppointTab" onclick="switchTplTab('appoint')" style="font-size:12px;padding:6px 14px;">Appointment Letter</button>
+          </div>
+        </div>
+
+        <!-- Placeholder chips -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Click to insert placeholder →</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;" id="placeholderChips">
+            <span class="ph-chip" onclick="insertPlaceholder('{{name}}')">{{name}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{role}}')">{{role}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{department}}')">{{department}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{salary}}')">{{salary}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{joinDate}}')">{{joinDate}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{email}}')">{{email}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{company}}')">{{company}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{address}}')">{{address}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{workHours}}')">{{workHours}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{probation}}')">{{probation}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{noticePeriod}}')">{{noticePeriod}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{refNo}}')">{{refNo}}</span>
+            <span class="ph-chip" onclick="insertPlaceholder('{{today}}')">{{today}}</span>
+          </div>
+        </div>
+
+        <!-- Offer Letter Editor -->
+        <div id="tplOfferEditor">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="settings-grid">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Offer Letter — Opening Paragraph</div>
+              <textarea id="tplOfferOpening" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;" placeholder="We are pleased to inform you..." onfocus="setActiveTpl(this)"></textarea>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Offer Letter — Closing Paragraph</div>
+              <textarea id="tplOfferClosing" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;" placeholder="We look forward to welcoming you..." onfocus="setActiveTpl(this)"></textarea>
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Additional Terms / Conditions (optional)</div>
+            <textarea id="tplOfferTerms" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;" placeholder="e.g. This offer is valid for 7 days from the date of issue..." onfocus="setActiveTpl(this)"></textarea>
+          </div>
+        </div>
+
+        <!-- Appointment Letter Editor -->
+        <div id="tplAppointEditor" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="settings-grid">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Appointment Letter — Opening Paragraph</div>
+              <textarea id="tplAppointOpening" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;" placeholder="With reference to your application..." onfocus="setActiveTpl(this)"></textarea>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Appointment Letter — Closing Paragraph</div>
+              <textarea id="tplAppointClosing" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;" placeholder="We look forward to a long and mutually..." onfocus="setActiveTpl(this)"></textarea>
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Confidentiality / Code of Conduct Clause (optional)</div>
+            <textarea id="tplAppointClause" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;line-height:1.6;" placeholder="e.g. You shall not disclose any confidential information..." onfocus="setActiveTpl(this)"></textarea>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;padding:12px 14px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:12px;color:var(--muted);line-height:1.8;">
+          💡 <strong style="color:var(--accent)">Placeholders auto-fill</strong> when letter is generated:
+          &nbsp;{{name}} → Employee Name &nbsp;|&nbsp; {{role}} → Designation &nbsp;|&nbsp; {{salary}} → ₹ Amount &nbsp;|&nbsp; {{joinDate}} → Joining Date &nbsp;|&nbsp; {{department}} → Dept &nbsp;|&nbsp; {{company}} → Company Name
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn-submit" onclick="saveSettings()">💾 Save Settings</button>
+        <button class="btn-export" onclick="resetSettings()">↺ Reset to Default</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT EMPLOYEE MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3 id="modalTitle">Add New Employee</h3>
+    <input type="hidden" id="editEmpId" value="" />
+    <div class="form-row">
+      <div class="field"><label>Full Name</label><input type="text" id="newEmpName" placeholder="Full name" /></div>
+      <div class="field"><label>Username</label><input type="text" id="newEmpUser" placeholder="Login username" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Password</label><input type="password" id="newEmpPass" placeholder="Leave blank to keep existing" /></div>
+      <div class="field"><label>Department</label><input type="text" id="newEmpDept" placeholder="e.g. Sales" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Role/Designation</label><input type="text" id="newEmpRole" placeholder="e.g. Executive" /></div>
+      <div class="field"><label>Monthly Salary (&#8377;)</label><input type="number" id="newEmpSalary" placeholder="25000" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>WhatsApp Number (10 digits)</label><input type="tel" id="newEmpPhone" placeholder="9876543210" maxlength="10" /></div>
+      <div class="field"><label>Email ID</label><input type="email" id="newEmpEmail" placeholder="employee@email.com" /></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>Join Date</label><input type="date" id="newEmpJoin" /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-submit" id="modalSaveBtn" onclick="saveEmployee()">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORCE CHECKOUT MODAL -->
+<div class="modal-overlay" id="forceCoModal">
+  <div class="force-co-modal">
+    <h3 style="margin-bottom:6px;font-size:18px;">🔴 Force Check-Out</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Employee forgot to check out. Set manual check-out time.</p>
+    <input type="hidden" id="forceCoEmpId" />
+    <div class="field" style="margin-bottom:16px">
+      <label>Employee</label>
+      <input type="text" id="forceCoEmpName" readonly style="background:var(--bg);cursor:default;" />
+    </div>
+    <div class="field" style="margin-bottom:20px">
+      <label>Check-Out Time</label>
+      <input type="time" id="forceCoTime" value="18:30" />
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-cancel" onclick="closeForceCoModal()">Cancel</button>
+      <button class="btn-checkout" style="padding:10px 20px;font-size:14px" onclick="confirmForceCheckout()">✗ Force Check-Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- LETTER PREVIEW MODAL -->
+<div class="letter-modal-overlay" id="letterModal">
+  <div class="letter-modal">
+    <div class="letter-modal-header">
+      <h3 id="letterModalTitle">📄 Letter Preview</h3>
+      <div class="letter-modal-actions">
+        <button class="btn-letter download" onclick="printLetter()">🖨️ Print / Save PDF</button>
+        <button class="btn-letter gmail" onclick="gmailLetter()">📧 Send via Gmail</button>
+        <button class="btn-cancel" onclick="closeLetterModal()">✕ Close</button>
+      </div>
+    </div>
+    <div class="letter-tabs">
+      <button class="letter-tab active" id="offerTab" onclick="switchLetterTab('offer')">Offer Letter</button>
+      <button class="letter-tab" id="appointTab" onclick="switchLetterTab('appoint')">Appointment Letter</button>
+    </div>
+    <div id="letterPreviewWrap">
+      <div class="letter-preview" id="letterPreviewContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<script>
+// ═══════════ DATA STORE ═══════════
+let state = {
+  currentUser: null,
+  currentRole: 'admin',
+  loginRole: 'admin',
+  employees: [
+    { id:'emp1', name:'Rahul Sharma', username:'emp1', password:'emp123', dept:'Sales', role:'Executive', salary:25000, phone:'', email:'rahul.sharma@email.com', joinDate:'2024-01-15' },
+    { id:'emp2', name:'Priya Singh', username:'emp2', password:'emp456', dept:'Marketing', role:'Manager', salary:35000, phone:'', email:'priya.singh@email.com', joinDate:'2023-06-01' },
+    { id:'emp3', name:'Arjun Mehta', username:'emp3', password:'emp789', dept:'Operations', role:'Coordinator', salary:22000, phone:'', email:'arjun.mehta@email.com', joinDate:'2024-03-10' },
+  ],
+  attendance: {},
+  leaves: [],
+  todayCheckedIn: {},
+  company: {
+    name: 'Nitya Marketing Management',
+    tagline: 'Excellence in Marketing & Business Solutions',
+    address: 'Mumbai, Maharashtra',
+    email: 'hr@nitya-marketing.com',
+    phone: '',
+    website: '',
+    cin: '',
+    gstin: '',
+    logoDataUrl: null,
+    signatureDataUrl: null,
+    signatoryName: 'Authorized Signatory',
+    signatoryDesig: 'HR Manager',
+    letterColor: '#b45309',
+    workHours: '9:00 AM – 6:30 PM (Mon – Sat)',
+    probation: '3 Months from Date of Joining',
+    noticePeriod: '30 Days (post-confirmation)',
+    // Letter Templates
+    offerOpening: 'We are pleased to inform you that after careful evaluation of your profile and interview process, {{company}} is delighted to extend this offer of employment to you. We believe your skills and experience will be a valuable addition to our growing team.',
+    offerClosing: 'We look forward to welcoming you to the {{company}} family. Should you have any queries, please do not hesitate to contact our HR department.',
+    offerTerms: 'This offer is subject to satisfactory background verification and submission of all required documents prior to your joining date. Kindly confirm your acceptance of this offer by signing and returning a copy of this letter.',
+    appointOpening: 'With reference to your application and the subsequent interview, we are pleased to appoint you as {{role}} in the {{department}} Department at {{company}}, effective from {{joinDate}}.',
+    appointClosing: 'Please sign and return a copy of this letter as a token of your acceptance of the above terms and conditions. We look forward to a long and mutually beneficial association.',
+    appointClause: 'You shall not disclose any confidential information, trade secrets, or proprietary data of the company to any third party during or after your employment. You are expected to maintain the highest standards of professionalism, integrity, and conduct in all dealings on behalf of the company.',
+  }
+};
+
+// Pre-populate some attendance data
+const todayDate = new Date();
+function fmtDate(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// Past 10 days sample data
+for(let i=1;i<=10;i++){
+  let d = new Date(); d.setDate(d.getDate()-i);
+  let dk = fmtDate(d);
+  state.attendance['emp1_'+dk] = { checkIn:'09:05', checkOut:'18:10', status:'present', location:'Mumbai - 19.0760,72.8777' };
+  state.attendance['emp2_'+dk] = { checkIn:'09:30', checkOut:'18:45', status:'present', location:'Mumbai - 19.0760,72.8777' };
+  if(i!==3) state.attendance['emp3_'+dk] = { checkIn:'09:15', checkOut:'17:55', status:'present', location:'Mumbai - 19.0760,72.8777' };
+}
+// Sample leaves
+state.leaves = [
+  { id:'l1', empId:'emp3', empName:'Arjun Mehta', type:'Sick Leave', from:'2025-06-03', to:'2025-06-03', reason:'Fever', status:'approved' },
+  { id:'l2', empId:'emp1', empName:'Rahul Sharma', type:'Casual Leave', from:'2025-06-10', to:'2025-06-11', reason:'Personal work', status:'pending' },
+];
+
+// ═══════════ AUTH ═══════════
+function switchRole(r) {
+  state.loginRole = r;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active', (r==='admin'&&i===0)||(r==='employee'&&i===1)));
+}
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  if(state.loginRole==='admin' && u==='admin' && p==='admin123') {
+    state.currentUser = { id:'admin', name:'Admin User', role:'admin' };
+    state.currentRole = 'admin';
+    launchApp();
+  } else {
+    const emp = state.employees.find(e=>e.username===u && e.password===p);
+    if(emp && state.loginRole==='employee') {
+      state.currentUser = { id:emp.id, name:emp.name, role:'employee', empData:emp };
+      state.currentRole = 'employee';
+      launchApp();
+    } else {
+      showNotif('Invalid credentials. Try again.','error');
+    }
+  }
+}
+function doLogout() {
+  state.currentUser = null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+// ═══════════ APP LAUNCH ═══════════
+function launchApp() {
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('topbarName').textContent = state.currentUser.name;
+  const rb = document.getElementById('roleBadge');
+  rb.textContent = state.currentRole==='admin'?'Admin':'Employee';
+  rb.className = 'badge '+(state.currentRole==='admin'?'admin':'employee');
+  buildNav();
+  showPage('dashboard');
+  startClock();
+}
+
+function buildNav() {
+  const adminPages = [
+    {id:'dashboard',label:'Dashboard'},
+    {id:'markattend',label:'Mark Attendance'},
+    {id:'leave',label:'Leaves'},
+    {id:'salary',label:'Salary'},
+    {id:'reports',label:'Reports'},
+    {id:'employees',label:'Employees'},
+    {id:'settings',label:'⚙️ Settings'},
+  ];
+  const empPages = [
+    {id:'dashboard',label:'Dashboard'},
+    {id:'attendance',label:'My Attendance'},
+    {id:'leave',label:'Leave'},
+    {id:'salary',label:'My Salary'},
+    {id:'letters',label:'📄 My Letters'},
+  ];
+  const pages = state.currentRole==='admin'?adminPages:empPages;
+  const nav = document.getElementById('navBar');
+  nav.innerHTML = pages.map(p=>`<button class="nav-item" onclick="showPage('${p.id}')" id="nav-${p.id}">${p.label}</button>`).join('');
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  const nb = document.getElementById('nav-'+id);
+  if(nb) nb.classList.add('active');
+  // Render content
+  if(id==='dashboard') renderDashboard();
+  if(id==='attendance') renderMyAttendance();
+  if(id==='leave') renderLeave();
+  if(id==='markattend') renderMarkAttend();
+  if(id==='salary') renderSalary();
+  if(id==='reports') renderReports();
+  if(id==='employees') renderEmployees();
+  if(id==='letters') renderMyLetters();
+  if(id==='settings') renderSettings();
+}
+
+// ═══════════ CLOCK ═══════════
+function startClock() {
+  function tick() {
+    const n = new Date();
+    const t = n.toLocaleTimeString('en-IN');
+    const d = n.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const el = document.getElementById('liveClock');
+    const de = document.getElementById('liveDate');
+    const td = document.getElementById('topbarDate');
+    if(el) el.textContent = t;
+    if(de) de.textContent = d;
+    if(td) td.textContent = d;
+  }
+  tick(); setInterval(tick,1000);
+  // Greeting
+  const h = new Date().getHours();
+  const g = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const greet = document.getElementById('dashGreet');
+  if(greet) greet.textContent = `${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${state.currentUser.name}! Welcome to Nitya HR.`;
+}
+
+// ═══════════ DASHBOARD ═══════════
+function renderDashboard() {
+  const dk = fmtDate(new Date());
+  let present=0, absent=0, onLeave=0, pending=0;
+  state.employees.forEach(e=>{
+    const a = state.attendance[e.id+'_'+dk];
+    const lv = state.leaves.find(l=>l.empId===e.id && l.from<=dk && l.to>=dk && l.status==='approved');
+    if(lv) onLeave++;
+    else if(a && a.checkIn) present++;
+    else absent++;
+  });
+  // Employee sees only their own pending leaves; Admin sees all
+  if(state.currentRole === 'admin') {
+    pending = state.leaves.filter(l=>l.status==='pending').length;
+  } else {
+    pending = state.leaves.filter(l=>l.empId===state.currentUser.id && l.status==='pending').length;
+  }
+  document.getElementById('statPresent').textContent = present;
+  document.getElementById('statAbsent').textContent = absent;
+  document.getElementById('statLeave').textContent = onLeave;
+  document.getElementById('statPending').textContent = pending;
+  // Table
+  const tbody = document.getElementById('todayTable');
+  const isAdmin = state.currentRole==='admin';
+  tbody.innerHTML = state.employees.map(e=>{
+    const a = state.attendance[e.id+'_'+dk]||{};
+    const lv = state.leaves.find(l=>l.empId===e.id && l.from<=dk && l.to>=dk && l.status==='approved');
+    let st='Absent', dotC='absent';
+    if(lv){ st='On Leave'; dotC='leave'; }
+    else if(a.checkIn){ st='Present'; dotC='present'; }
+    const forceBtn = (isAdmin && a.checkIn && !a.checkOut)
+      ? `<button class="btn-reject" style="font-size:11px;padding:4px 10px;margin-left:6px" onclick="openForceCoModal('${e.id}')">🔴 Force C/O</button>`
+      : '';
+    return `<tr><td>${e.name}</td><td>${a.checkIn||'—'}</td><td>${a.checkOut||'—'} ${forceBtn}</td>
+      <td><span class="dot ${dotC}"></span>${st}</td>
+      <td style="font-size:12px;color:var(--muted)">${a.location||'—'}</td></tr>`;
+  }).join('');
+}
+
+// ═══════════ CHECK IN/OUT ═══════════
+function renderMyAttendance() {
+  const emp = state.currentUser.empData;
+  const dk = fmtDate(new Date());
+  const a = state.attendance[emp.id+'_'+dk];
+  const pill = document.getElementById('attendStatus');
+  const btnIn = document.getElementById('btnCheckin');
+  const btnOut = document.getElementById('btnCheckout');
+  if(a && a.checkIn && a.checkOut) {
+    pill.textContent='Checked Out'; pill.className='status-pill checked-out';
+    btnIn.disabled=true; btnOut.disabled=true;
+    document.getElementById('gpsText').textContent = a.location||'N/A';
+  } else if(a && a.checkIn) {
+    pill.textContent='Checked In'; pill.className='status-pill checked-in';
+    btnIn.disabled=true; btnOut.disabled=false;
+    document.getElementById('gpsText').textContent = a.location||'N/A';
+  } else {
+    pill.textContent='Not Started'; pill.className='status-pill not-started';
+    btnIn.disabled=false; btnOut.disabled=true;
+  }
+  // History
+  const tbody = document.getElementById('myAttendTable');
+  const entries = [];
+  for(let i=0;i<30;i++){
+    let d=new Date(); d.setDate(d.getDate()-i);
+    const k = emp.id+'_'+fmtDate(d);
+    const rec = state.attendance[k];
+    if(rec) {
+      let hrs='—';
+      if(rec.checkIn && rec.checkOut){
+        // Parse times like "09:05 AM" or "09:05"
+        function parseTime(str) {
+          if(!str) return 0;
+          const clean = str.replace(/\s?(AM|PM)/i,'').trim();
+          const [h,m] = clean.split(':').map(Number);
+          let hours = h;
+          if(/PM/i.test(str) && h!==12) hours += 12;
+          if(/AM/i.test(str) && h===12) hours = 0;
+          return hours*60 + (m||0);
+        }
+        const inMin = parseTime(rec.checkIn);
+        const outMin = parseTime(rec.checkOut);
+        const diff = outMin - inMin;
+        hrs = diff > 0 ? (diff/60).toFixed(1)+'h' : '—';
+      }
+      entries.push(`<tr><td>${fmtDate(d)}</td><td>${rec.checkIn||'—'}</td><td>${rec.checkOut||'—'}</td>
+        <td>${hrs}</td><td><span class="dot present"></span>Present</td></tr>`);
+    }
+  }
+  tbody.innerHTML = entries.join('') || '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">No records found</td></tr>';
+}
+
+async function getAreaName(lat, lon) {
+  try {
+    const res = await fetch(
+      'https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&zoom=16&addressdetails=1',
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const data = await res.json();
+    const a = data.address || {};
+    // Priority: road/area > neighbourhood > suburb > city_district > city
+    const area = a.neighbourhood || a.suburb || a.city_district || a.quarter || a.hamlet || '';
+    const city = a.city || a.town || a.village || a.county || '';
+    const parts = [area, city].filter(Boolean);
+    return parts.length ? parts.join(', ') : (lat.toFixed(4)+','+lon.toFixed(4));
+  } catch(e) {
+    return lat.toFixed(4)+','+lon.toFixed(4);
+  }
+}
+
+async function doCheckIn() {
+  const emp = state.currentUser.empData;
+  const dk = fmtDate(new Date());
+  const t = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('gpsText').textContent = '📍 Fetching location...';
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      const areaName = await getAreaName(lat, lon);
+      const locStr = `📍 ${areaName} (${lat.toFixed(4)},${lon.toFixed(4)})`;
+      state.attendance[emp.id+'_'+dk] = { checkIn:t, status:'present', location: locStr };
+      document.getElementById('gpsText').textContent = locStr;
+      renderMyAttendance();
+      showNotif('Checked in at '+t+' ✓','success');
+    autoSave();
+    }, ()=>{
+      state.attendance[emp.id+'_'+dk] = { checkIn:t, status:'present', location:'Location not available' };
+      document.getElementById('gpsText').textContent = 'Location not available';
+      renderMyAttendance();
+      showNotif('Checked in at '+t+' ✓','success');
+    }, { enableHighAccuracy:true, timeout:10000 });
+  } else {
+    state.attendance[emp.id+'_'+dk] = { checkIn:t, status:'present', location:'GPS not supported' };
+    renderMyAttendance();
+    showNotif('Checked in at '+t+' ✓','success');
+  }
+}
+
+function doCheckOut() {
+  const emp = state.currentUser.empData;
+  const dk = fmtDate(new Date());
+  const t = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  if(state.attendance[emp.id+'_'+dk]) {
+    state.attendance[emp.id+'_'+dk].checkOut = t;
+    renderMyAttendance(); showNotif('Checked out at '+t+' ✓','success');
+    autoSave();
+  }
+}
+
+// ═══════════ LEAVE ═══════════
+function renderLeave() {
+  const isAdmin = state.currentRole==='admin';
+  document.getElementById('leaveSubtitle').textContent = isAdmin?'Manage leave requests':'Apply and track your leaves';
+  document.getElementById('actionCol').textContent = isAdmin?'Actions':'';
+  const empSel = document.getElementById('empSelectWrap');
+  // Always refresh employee list, show only for admin
+  const sel = document.getElementById('leaveEmpSelect');
+  sel.innerHTML = state.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  empSel.style.display = isAdmin ? 'block' : 'none';
+  // Table
+  const leaves = isAdmin ? state.leaves : state.leaves.filter(l=>l.empId===state.currentUser.id);
+  const tbody = document.getElementById('leaveTable');
+  tbody.innerHTML = leaves.map(l=>`
+    <tr>
+      <td>${l.empName}</td><td>${l.type}</td><td>${l.from}</td><td>${l.to}</td>
+      <td>${l.reason}</td>
+      <td><span class="leave-status ${l.status}">${l.status}</span></td>
+      <td style="white-space:nowrap">
+        ${isAdmin && l.status==='pending'?
+        `<button class="btn-approve" onclick="updateLeave('${l.id}','approved')">Approve</button>
+         <button class="btn-reject" onclick="updateLeave('${l.id}','rejected')" style="margin:0 4px">Reject</button>`
+        :''}
+        ${isAdmin?`<button onclick="sendWhatsApp('${l.empId}','${l.status}','${l.type}','${l.from}','${l.to}')" style="padding:6px 10px;background:rgba(37,211,102,0.15);color:#25d366;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">&#128234; WA</button>`:''}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No leave requests</td></tr>';
+}
+
+function applyLeave() {
+  const isAdmin = state.currentRole==='admin';
+  const empId = isAdmin ? document.getElementById('leaveEmpSelect').value : state.currentUser.id;
+  const emp = state.employees.find(e=>e.id===empId);
+  const from = document.getElementById('leaveFrom').value;
+  const to = document.getElementById('leaveTo').value;
+  const reason = document.getElementById('leaveReason').value;
+  const type = document.getElementById('leaveType').value;
+  if(!from||!to||!reason) { showNotif('Please fill all fields','error'); return; }
+  state.leaves.unshift({ id:'l'+Date.now(), empId, empName:emp?emp.name:state.currentUser.name, type, from, to, reason, status:'pending' });
+  showNotif('Leave request submitted!','success');
+    autoSave();
+  renderLeave();
+}
+
+function updateLeave(id, status) {
+  const l = state.leaves.find(x=>x.id===id);
+  if(l) { l.status=status; renderLeave(); renderDashboard(); showNotif('Leave '+status,'success');
+    autoSave(); }
+}
+
+// ═══════════ SALARY ═══════════
+function getAttendanceSummary(empId, workDays) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  let present = 0, halfDay = 0, paidLeave = 0, unpaidLeave = 0, absent = 0;
+  let workingDaysSoFar = 0;
+
+  for(let i = 1; i <= 31; i++) {
+    const d = new Date(year, month, i);
+    if(d.getMonth() !== month) break;
+    if(d > now) continue; // skip future
+    // Skip weekends
+    if(d.getDay() === 0 || d.getDay() === 6) continue;
+    workingDaysSoFar++;
+
+    const dk = fmtDate(d);
+    const key = empId + '_' + dk;
+    const a = state.attendance[key];
+    if(!a) {
+      // Check approved leave
+      const lv = state.leaves.find(l => l.empId===empId && l.from<=dk && l.to>=dk && l.status==='approved');
+      if(lv) {
+        if(lv.type==='Unpaid Leave') unpaidLeave++;
+        else paidLeave++;
+      } else {
+        absent++;
+      }
+    } else if(a.status==='present') present++;
+    else if(a.status==='half') halfDay++;
+    else if(a.status==='leave') paidLeave++;
+    else if(a.status==='absent') absent++;
+  }
+  return { present, halfDay, paidLeave, unpaidLeave, absent, workingDaysSoFar };
+}
+
+function renderSalary() {
+  const isAdmin = state.currentRole==='admin';
+  const emps = isAdmin ? state.employees : [state.currentUser.empData];
+  const grid = document.getElementById('salaryGrid');
+  const workDays = 26; // Standard working days per month
+
+  grid.innerHTML = emps.map(e => {
+    const { present, halfDay, paidLeave, unpaidLeave, absent, workingDaysSoFar } = getAttendanceSummary(e.id, workDays);
+
+    const perDay     = Math.round(e.salary / workDays);
+    const perHalf    = Math.round(perDay / 2);
+    const earnedPresent = present * perDay;
+    const earnedHalf    = halfDay * perHalf;
+    const earnedLeave   = paidLeave * perDay;
+    const totalEarned   = earnedPresent + earnedHalf + earnedLeave;
+    const absentDeduct  = absent * perDay;
+    const unpaidDeduct  = unpaidLeave * perDay;
+    const totalDeduct   = absentDeduct + unpaidDeduct;
+    const netPay        = Math.max(0, totalEarned - totalDeduct);
+    // Net color based on attendance % of days worked so far
+    const attendPct = workingDaysSoFar > 0 ? (present + halfDay*0.5 + paidLeave) / workingDaysSoFar : 1;
+    const netColor  = attendPct >= 0.8 ? 'var(--present)' : attendPct >= 0.5 ? 'var(--leave)' : 'var(--danger)';
+
+    let rows = '';
+    rows += '<div class="salary-row"><span class="lbl">Gross Monthly Salary</span><span class="amt">&#8377;'+e.salary.toLocaleString()+'</span></div>';
+    rows += '<div class="salary-row"><span class="lbl">Per Day Rate</span><span class="amt">&#8377;'+perDay.toLocaleString()+'</span></div>';
+    rows += '<div class="salary-row"><span class="lbl">Working Days (Month)</span><span class="amt">'+workDays+' days</span></div>';
+    rows += '<div class="salary-row"><span class="lbl">Working Days (So Far)</span><span class="amt" style="color:var(--accent)">'+workingDaysSoFar+' days</span></div>';
+    rows += '<div style="height:1px;background:var(--border);margin:4px 0"></div>';
+    rows += '<div class="salary-row"><span class="lbl">&#10003; Present Days</span><span class="amt" style="color:var(--present)">'+present+' days &times; &#8377;'+perDay+' = &#8377;'+earnedPresent.toLocaleString()+'</span></div>';
+    if(halfDay > 0) rows += '<div class="salary-row"><span class="lbl">&#189; Half Days</span><span class="amt" style="color:var(--half)">'+halfDay+' days &times; &#8377;'+perHalf+' = &#8377;'+earnedHalf.toLocaleString()+'</span></div>';
+    if(paidLeave > 0) rows += '<div class="salary-row"><span class="lbl">&#128197; Paid Leave</span><span class="amt" style="color:var(--leave)">'+paidLeave+' days &times; &#8377;'+perDay+' = &#8377;'+earnedLeave.toLocaleString()+'</span></div>';
+    rows += '<div class="salary-row"><span class="lbl" style="font-weight:600">Total Earned</span><span class="amt" style="font-weight:700">&#8377;'+totalEarned.toLocaleString()+'</span></div>';
+    rows += '<div style="height:1px;background:var(--border);margin:4px 0"></div>';
+    if(absent > 0) rows += '<div class="salary-row"><span class="lbl" style="color:var(--danger)">&#10005; Absent Deduction</span><span class="amt" style="color:var(--danger)">-&#8377;'+absentDeduct.toLocaleString()+' ('+absent+' days)</span></div>';
+    if(unpaidLeave > 0) rows += '<div class="salary-row"><span class="lbl" style="color:var(--danger)">&#10005; Unpaid Leave</span><span class="amt" style="color:var(--danger)">-&#8377;'+unpaidDeduct.toLocaleString()+' ('+unpaidLeave+' days)</span></div>';
+    if(totalDeduct === 0) rows += '<div class="salary-row"><span class="lbl" style="color:var(--present)">&#10003; No Deductions</span><span class="amt" style="color:var(--present)">Full month present!</span></div>';
+    rows += '<div style="height:1px;background:var(--border);margin:8px 0"></div>';
+    rows += '<div class="salary-row total"><span class="lbl">Net Payable</span><span class="amt" style="color:'+netColor+'">&#8377;'+netPay.toLocaleString()+'</span></div>';
+
+    return '<div class="salary-card">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:8px">'
+      + '<h3 style="font-size:16px">'+e.name+' <span style="font-size:12px;color:var(--muted);font-weight:400">'+(e.role||'')+'</span></h3>'
+      + '<span style="font-size:12px;color:var(--muted);background:var(--surface);padding:4px 10px;border-radius:20px;border:1px solid var(--border)">'+(e.dept||'')+'</span>'
+      + '</div>'
+      + rows
+      + '</div>';
+  }).join('');
+}
+
+// ═══════════ REPORTS ═══════════
+function renderReports() {
+  const tbody = document.getElementById('reportTable');
+  const workDays = 26;
+  tbody.innerHTML = state.employees.map(e=>{
+    let present=0;
+    for(let i=0;i<30;i++){
+      let d=new Date(); d.setDate(d.getDate()-i);
+      const k = e.id+'_'+fmtDate(d);
+      if(state.attendance[k]?.checkIn) present++;
+    }
+    present = Math.min(present,workDays);
+    const leave = state.leaves.filter(l=>l.empId===e.id && l.status==='approved').length;
+    const absent = workDays-present-leave;
+    const pct = Math.round((present/workDays)*100);
+    return `<tr>
+      <td>${e.name}</td><td>${workDays}</td>
+      <td style="color:var(--present);font-weight:600">${present}</td>
+      <td style="color:var(--danger)">${Math.max(0,absent)}</td>
+      <td style="color:var(--leave)">${leave}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${pct>80?'var(--present)':pct>60?'var(--leave)':'var(--danger)'};border-radius:3px"></div>
+          </div>
+          ${pct}%
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════ EMPLOYEES ═══════════
+function renderEmployees() {
+  const tbody = document.getElementById('empTable');
+  const dk = fmtDate(new Date());
+  tbody.innerHTML = state.employees.map(e=>{
+    const a = state.attendance[e.id+'_'+dk]||{};
+    const forceBtn = (a.checkIn && !a.checkOut)
+      ? `<button class="btn-reject" style="font-size:11px;padding:4px 8px" onclick="openForceCoModal('${e.id}')">🔴 Force C/O</button>`
+      : '';
+    return `<tr>
+      <td>${e.name}</td><td>${e.role}</td><td>${e.dept}</td>
+      <td style="font-size:12px;color:var(--muted)">${e.email||'—'}</td>
+      <td>&#8377;${e.salary.toLocaleString()}</td><td>${e.joinDate}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-approve" onclick="openEditModal('${e.id}')">&#9998; Edit</button>
+        <button class="btn-letter view" style="padding:5px 10px;font-size:11px" onclick="openLetterModalForEmp('${e.id}')">📄 Letters</button>
+        ${forceBtn}
+        <button class="btn-reject" onclick="removeEmp('${e.id}')">Remove</button>
+      </td>
+    </tr>`}).join('');
+}
+
+function openAddModal() {
+  document.getElementById('editEmpId').value = '';
+  document.getElementById('modalTitle').textContent = 'Add New Employee';
+  document.getElementById('modalSaveBtn').textContent = 'Add Employee';
+  document.getElementById('newEmpName').value = '';
+  document.getElementById('newEmpUser').value = '';
+  document.getElementById('newEmpPass').value = '';
+  document.getElementById('newEmpDept').value = '';
+  document.getElementById('newEmpRole').value = '';
+  document.getElementById('newEmpSalary').value = '';
+  document.getElementById('newEmpPhone').value = '';
+  document.getElementById('newEmpEmail').value = '';
+  document.getElementById('newEmpJoin').value = '';
+  document.getElementById('addModal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const e = state.employees.find(x=>x.id===id);
+  if(!e) return;
+  document.getElementById('editEmpId').value = id;
+  document.getElementById('modalTitle').textContent = 'Edit Employee';
+  document.getElementById('modalSaveBtn').textContent = 'Save Changes';
+  document.getElementById('newEmpName').value = e.name;
+  document.getElementById('newEmpUser').value = e.username;
+  document.getElementById('newEmpPass').value = '';
+  document.getElementById('newEmpDept').value = e.dept;
+  document.getElementById('newEmpRole').value = e.role;
+  document.getElementById('newEmpSalary').value = e.salary;
+  document.getElementById('newEmpPhone').value = e.phone||'';
+  document.getElementById('newEmpEmail').value = e.email||'';
+  document.getElementById('newEmpJoin').value = e.joinDate||'';
+  document.getElementById('addModal').classList.add('open');
+}
+
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+
+function saveEmployee() {
+  const editId = document.getElementById('editEmpId').value;
+  const name = document.getElementById('newEmpName').value.trim();
+  const username = document.getElementById('newEmpUser').value.trim();
+  const password = document.getElementById('newEmpPass').value.trim();
+  const dept = document.getElementById('newEmpDept').value.trim();
+  const role = document.getElementById('newEmpRole').value.trim();
+  const salary = parseInt(document.getElementById('newEmpSalary').value)||0;
+  const email = document.getElementById('newEmpEmail').value.trim();
+  if(!name||!username) { showNotif('Name and username required','error'); return; }
+
+  if(editId) {
+    const emp = state.employees.find(e=>e.id===editId);
+    if(emp) {
+      emp.name = name; emp.username = username;
+      if(password) emp.password = password;
+      emp.dept = dept; emp.role = role; emp.salary = salary;
+      emp.phone = document.getElementById('newEmpPhone').value.trim();
+      emp.email = email;
+      closeAddModal(); renderEmployees(); showNotif(name+' updated successfully!','success');
+    autoSave();
+    }
+  } else {
+    if(!password) { showNotif('Password required for new employee','error'); return; }
+    const id = 'emp'+(Date.now());
+    const phone = document.getElementById('newEmpPhone').value.trim();
+    const joinDate = document.getElementById('newEmpJoin').value || fmtDate(new Date());
+    state.employees.push({ id, name, username, password, dept, role, salary, phone, email, joinDate });
+    closeAddModal(); renderEmployees();
+    showNotif(name+' added! Opening letters... 📄','success');
+    autoSave();
+    // Auto-open letter modal for newly added employee
+    setTimeout(()=>openLetterModalForEmp(id), 800);
+  }
+}
+
+function removeEmp(id) {
+  if(!confirm('Are you sure you want to remove this employee?')) return;
+  state.employees = state.employees.filter(e=>e.id!==id);
+  renderEmployees(); showNotif('Employee removed','success');
+    autoSave();
+}
+
+// ═══════════ MARK ATTENDANCE (ADMIN) ═══════════
+function renderMarkAttend() {
+  // Populate employee dropdowns
+  const empOpts = state.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+  document.getElementById('maEmpSelect').innerHTML = empOpts;
+  const filterOpts = '<option value="all">All Employees</option>' + empOpts;
+  document.getElementById('maFilterEmp').innerHTML = filterOpts;
+  // Set today as default date
+  document.getElementById('maDate').value = fmtDate(new Date());
+  // Toggle time fields
+  document.getElementById('maStatus').onchange = function() {
+    const show = this.value === 'present' || this.value === 'half';
+    document.getElementById('maTimeWrap').style.display = show?'block':'none';
+    document.getElementById('maCheckOutWrap').style.display = show?'grid':'none';
+  };
+  renderMarkAttendTable();
+}
+
+function markAttendance() {
+  const empId = document.getElementById('maEmpSelect').value;
+  const date = document.getElementById('maDate').value;
+  const status = document.getElementById('maStatus').value;
+  const checkIn = document.getElementById('maCheckIn').value;
+  const checkOut = document.getElementById('maCheckOut').value;
+  const note = document.getElementById('maNote').value;
+  if(!empId || !date) { showNotif('Select employee and date','error'); return; }
+  const key = empId+'_'+date;
+  if(status === 'absent') {
+    state.attendance[key] = { checkIn:'', checkOut:'', status:'absent', location:'Admin marked', note };
+  } else if(status === 'leave') {
+    state.attendance[key] = { checkIn:'', checkOut:'', status:'leave', location:'Admin marked', note };
+  } else {
+    const fmt = t => { if(!t) return ''; const [h,m]=t.split(':'); const hh=parseInt(h); return (hh>12?hh-12:hh||12)+':'+m+' '+(hh>=12?'PM':'AM'); };
+    state.attendance[key] = { checkIn:fmt(checkIn), checkOut:fmt(checkOut), status, location:'Admin marked', note };
+  }
+  const emp = state.employees.find(e=>e.id===empId);
+  showNotif(`${emp?emp.name:'Employee'} — ${date} marked as ${status} ✓`,'success');
+    autoSave();
+  renderMarkAttendTable();
+  renderDashboard();
+}
+
+function renderMarkAttendTable() {
+  const filterEmp = document.getElementById('maFilterEmp')?.value || 'all';
+  const tbody = document.getElementById('maTable');
+  const entries = [];
+  // Collect last 30 days
+  for(let i=0;i<30;i++) {
+    let d=new Date(); d.setDate(d.getDate()-i);
+    const dk = fmtDate(d);
+    state.employees.forEach(e=>{
+      if(filterEmp !== 'all' && e.id !== filterEmp) return;
+      const k = e.id+'_'+dk;
+      const a = state.attendance[k];
+      if(a) {
+        const stColor = a.status==='present'?'var(--present)':a.status==='absent'?'var(--danger)':a.status==='leave'?'var(--leave)':'var(--half)';
+        entries.push({ emp:e, date:dk, a });
+      }
+    });
+  }
+  entries.sort((a,b)=>b.date.localeCompare(a.date));
+  tbody.innerHTML = entries.slice(0,50).map(({emp,date,a})=>`
+    <tr>
+      <td>${emp.name}</td>
+      <td>${date}</td>
+      <td>${a.checkIn||'—'}</td>
+      <td>${a.checkOut||'—'}</td>
+      <td><span class="dot ${a.status}"></span>${a.status}</td>
+      <td style="color:var(--muted);font-size:12px">${a.note||a.location||'—'}</td>
+      <td><button class="btn-reject" style="font-size:11px;padding:4px 8px" onclick="deleteAttend('${emp.id}','${date}')">Delete</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No records</td></tr>';
+}
+
+function deleteAttend(empId, date) {
+  delete state.attendance[empId+'_'+date];
+  renderMarkAttendTable(); renderDashboard();
+  showNotif('Record deleted','success');
+    autoSave();
+}
+
+// ═══════════ WHATSAPP NOTIFICATION ═══════════
+function sendWhatsApp(empId, status, leaveType, from, to) {
+  const emp = state.employees.find(e=>e.id===empId);
+  if(!emp) return;
+  const phone = emp.phone || '';
+  let msg = '';
+  if(status === 'approved') {
+    msg = '✅ Hi ' + emp.name + ', your ' + leaveType + ' from ' + from + ' to ' + to + ' has been *APPROVED* by Nitya Marketing Management. Have a good rest! 🙏';
+  } else if(status === 'rejected') {
+    msg = '❌ Hi ' + emp.name + ', unfortunately your ' + leaveType + ' from ' + from + ' to ' + to + ' has been *REJECTED* by Nitya Marketing Management. Please contact HR for more details.';
+  } else {
+    // pending / on hold
+    msg = '⏳ Hi ' + emp.name + ', your ' + leaveType + ' request from ' + from + ' to ' + to + ' is currently *ON HOLD* and awaiting approval. We will update you soon. — Nitya Marketing Management';
+  }
+  const encoded = encodeURIComponent(msg);
+  const url = phone ? 'https://wa.me/91'+phone+'?text='+encoded : 'https://wa.me/?text='+encoded;
+  window.open(url, '_blank');
+}
+
+// ═══════════ EXPORT ═══════════
+function exportReport() {
+  const workDays=26;
+  let csv='Name,Working Days,Present,Absent,Leave,Attendance%\n';
+  state.employees.forEach(e=>{
+    let p=0;
+    for(let i=0;i<30;i++){let d=new Date();d.setDate(d.getDate()-i);if(state.attendance[e.id+'_'+fmtDate(d)]?.checkIn)p++;}
+    p=Math.min(p,workDays);
+    const lv=state.leaves.filter(l=>l.empId===e.id&&l.status==='approved').length;
+    const ab=Math.max(0,workDays-p-lv);
+    csv+=`${e.name},${workDays},${p},${ab},${lv},${Math.round((p/workDays)*100)}%\n`;
+  });
+  downloadCSV(csv,'nitya_attendance_report.csv');
+}
+function exportSalary() {
+  const workDays=26;
+  let csv='Name,Gross,Present,Earned,Deduction,Net Payable\n';
+  state.employees.forEach(e=>{
+    let p=0;
+    for(let i=0;i<30;i++){let d=new Date();d.setDate(d.getDate()-i);if(state.attendance[e.id+'_'+fmtDate(d)]?.checkIn)p++;}
+    p=Math.min(p,workDays);
+    const pd=e.salary/workDays;
+    const earned=Math.round(pd*p);
+    const net=earned+Math.round(pd*2);
+    csv+=`${e.name},${e.salary},${p},${earned},${e.salary-earned},${net}\n`;
+  });
+  downloadCSV(csv,'nitya_salary.csv');
+}
+function downloadCSV(csv, filename) {
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=filename; a.click();
+}
+
+// ═══════════ FORCE CHECKOUT ═══════════
+function openForceCoModal(empId) {
+  const emp = state.employees.find(e=>e.id===empId);
+  if(!emp) return;
+  document.getElementById('forceCoEmpId').value = empId;
+  document.getElementById('forceCoEmpName').value = emp.name;
+  document.getElementById('forceCoTime').value = '18:30';
+  document.getElementById('forceCoModal').classList.add('open');
+}
+function closeForceCoModal() { document.getElementById('forceCoModal').classList.remove('open'); }
+function confirmForceCheckout() {
+  const empId = document.getElementById('forceCoEmpId').value;
+  const timeVal = document.getElementById('forceCoTime').value;
+  if(!timeVal) { showNotif('Please enter check-out time','error'); return; }
+  const dk = fmtDate(new Date());
+  const key = empId+'_'+dk;
+  if(!state.attendance[key] || !state.attendance[key].checkIn) {
+    showNotif('Employee has no check-in record today','error'); return;
+  }
+  // Format time to AM/PM
+  const [h,m] = timeVal.split(':');
+  const hh = parseInt(h);
+  const formatted = (hh>12?hh-12:hh||12)+':'+m+' '+(hh>=12?'PM':'AM');
+  state.attendance[key].checkOut = formatted;
+  state.attendance[key].status = 'present';
+  closeForceCoModal();
+  renderDashboard();
+  if(document.getElementById('page-employees').classList.contains('active')) renderEmployees();
+  const emp = state.employees.find(e=>e.id===empId);
+  showNotif(`${emp?.name||'Employee'} force checked-out at ${formatted} ✓`,'success');
+    autoSave();
+}
+
+// ═══════════ LETTER GENERATION ═══════════
+let currentLetterEmpId = null;
+let currentLetterType = 'offer';
+
+function openLetterModalForEmp(empId) {
+  currentLetterEmpId = empId;
+  currentLetterType = 'offer';
+  document.getElementById('offerTab').classList.add('active');
+  document.getElementById('appointTab').classList.remove('active');
+  document.getElementById('letterModalTitle').textContent = '📄 Official Letters';
+  renderLetterContent(empId, 'offer');
+  document.getElementById('letterModal').classList.add('open');
+}
+function closeLetterModal() { document.getElementById('letterModal').classList.remove('open'); }
+function switchLetterTab(type) {
+  currentLetterType = type;
+  document.getElementById('offerTab').classList.toggle('active', type==='offer');
+  document.getElementById('appointTab').classList.toggle('active', type==='appoint');
+  renderLetterContent(currentLetterEmpId, type);
+}
+
+function getLetterId(type) {
+  const prefix = type==='offer'?'OL':'AL';
+  const now = new Date();
+  return prefix+'-NMM-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+'-'+String(Math.floor(Math.random()*900)+100);
+}
+
+function formatDate(dateStr) {
+  if(!dateStr) return new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+}
+
+// Replace all {{placeholders}} with actual employee/company values
+function resolveTpl(text, emp, refId) {
+  const c = state.company;
+  const today = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  return (text||'')
+    .replace(/\{\{name\}\}/g, emp.name||'')
+    .replace(/\{\{role\}\}/g, emp.role||'Executive')
+    .replace(/\{\{department\}\}/g, emp.dept||'—')
+    .replace(/\{\{salary\}\}/g, '₹'+((emp.salary||0).toLocaleString('en-IN'))+'/-')
+    .replace(/\{\{joinDate\}\}/g, formatDate(emp.joinDate))
+    .replace(/\{\{email\}\}/g, emp.email||'')
+    .replace(/\{\{company\}\}/g, c.name||'')
+    .replace(/\{\{address\}\}/g, c.address||'')
+    .replace(/\{\{workHours\}\}/g, c.workHours||'')
+    .replace(/\{\{probation\}\}/g, c.probation||'')
+    .replace(/\{\{noticePeriod\}\}/g, c.noticePeriod||'')
+    .replace(/\{\{refNo\}\}/g, refId||'')
+    .replace(/\{\{today\}\}/g, today);
+}
+
+function renderLetterContent(empId, type) {
+  const emp = state.employees.find(e=>e.id===empId);
+  if(!emp) return;
+  const c = state.company;
+  const today = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  const joinFormatted = formatDate(emp.joinDate);
+  const refId = getLetterId(type);
+
+  // Resolve custom templates
+  const r = (txt) => resolveTpl(txt, emp, refId);
+
+  // Build header HTML
+  const logoHtml = c.logoDataUrl
+    ? `<img src="${c.logoDataUrl}" style="max-height:64px;max-width:180px;object-fit:contain;display:block;margin:0 auto 8px;" />`
+    : '';
+  const extraInfo = [c.phone, c.website].filter(Boolean).join(' | ');
+  const regInfo = [c.cin?'CIN: '+c.cin:'', c.gstin?'GSTIN: '+c.gstin:''].filter(Boolean).join(' | ');
+  const headerHtml = `
+    <div class="ltr-header" style="border-bottom:2px solid ${c.letterColor}">
+      ${logoHtml}
+      <div class="ltr-company" style="color:${c.letterColor}">${c.name}</div>
+      ${c.tagline?`<div class="ltr-tagline">${c.tagline}</div>`:''}
+      <div class="ltr-address">${[c.address, c.email, extraInfo].filter(Boolean).join(' | ')}</div>
+      ${regInfo?`<div class="ltr-address" style="margin-top:2px">${regInfo}</div>`:''}
+    </div>`;
+
+  // Signature block
+  const signHtml = c.signatureDataUrl
+    ? `<img src="${c.signatureDataUrl}" style="max-height:60px;max-width:160px;object-fit:contain;display:block;margin-top:12px;" />`
+    : '<div style="height:50px;border-bottom:1px solid #999;width:160px;margin-top:12px;"></div>';
+
+  let html = '';
+  if(type==='offer') {
+    html = `
+    ${headerHtml}
+    <div class="ltr-ref">Ref No: ${refId} &nbsp;|&nbsp; Date: ${today}</div>
+    <p>To,<br><strong>${emp.name}</strong>${emp.email?'<br>'+emp.email:''}</p>
+    <h4 style="color:${c.letterColor}">OFFER LETTER</h4>
+    <p>Dear <strong>${emp.name}</strong>,</p>
+    <p>${r(c.offerOpening)}</p>
+    <p>Please find below the details of your offer:</p>
+    <table>
+      <tr><td>Designation</td><td>${emp.role||'Executive'}</td></tr>
+      <tr><td>Department</td><td>${emp.dept||'—'}</td></tr>
+      <tr><td>Date of Joining</td><td>${joinFormatted}</td></tr>
+      <tr><td>Monthly CTC</td><td>&#8377; ${emp.salary.toLocaleString('en-IN')}/-</td></tr>
+      <tr><td>Employment Type</td><td>Full Time, Permanent</td></tr>
+      <tr><td>Work Location</td><td>${c.address||'—'}</td></tr>
+      <tr><td>Work Hours</td><td>${c.workHours}</td></tr>
+    </table>
+    `+(c.offerTerms ? '<p>'+r(c.offerTerms)+'</p>' : '')+`
+    <p>${r(c.offerClosing)}</p>
+    <div class="ltr-sign">
+      <p>Warm regards,</p>
+      ${signHtml}
+      <div style="margin-top:6px;font-weight:700">${c.signatoryName}</div>
+      <div style="font-size:12px;color:#555">${c.signatoryDesig}</div>
+      <div style="font-size:12px;color:#555">${c.name}</div>
+    </div>
+    <p style="margin-top:32px;font-size:12px;color:#666;border-top:1px solid #ddd;padding-top:10px">
+      I, <strong>${emp.name}</strong>, hereby accept the above offer of employment on the terms and conditions mentioned.<br><br>
+      Signature: _________________________ &nbsp;&nbsp; Date: _____________
+    </p>`;
+  } else {
+    html = `
+    ${headerHtml}
+    <div class="ltr-ref">Ref No: ${refId} &nbsp;|&nbsp; Date: ${today}</div>
+    <p>To,<br><strong>${emp.name}</strong>${emp.email?'<br>'+emp.email:''}</p>
+    <h4 style="color:${c.letterColor}">APPOINTMENT LETTER</h4>
+    <p>Dear <strong>${emp.name}</strong>,</p>
+    <p>${r(c.appointOpening)}</p>
+    <p>The terms and conditions of your appointment are as follows:</p>
+    <table>
+      <tr><td>Name</td><td>${emp.name}</td></tr>
+      <tr><td>Designation</td><td>${emp.role||'Executive'}</td></tr>
+      <tr><td>Department</td><td>${emp.dept||'—'}</td></tr>
+      <tr><td>Date of Joining</td><td>${joinFormatted}</td></tr>
+      <tr><td>Monthly Gross Salary</td><td>&#8377; ${emp.salary.toLocaleString('en-IN')}/-</td></tr>
+      <tr><td>Work Hours</td><td>${c.workHours}</td></tr>
+      <tr><td>Probation Period</td><td>${c.probation}</td></tr>
+      <tr><td>Notice Period</td><td>${c.noticePeriod}</td></tr>
+    </table>
+    `+(c.appointClause ? '<p>'+r(c.appointClause)+'</p>' : '')+`
+    <p>${r(c.appointClosing)}</p>
+    <div class="ltr-sign">
+      <p>Yours sincerely,</p>
+      ${signHtml}
+      <div style="margin-top:6px;font-weight:700">${c.signatoryName}</div>
+      <div style="font-size:12px;color:#555">${c.signatoryDesig}</div>
+      <div style="font-size:12px;color:#555">${c.name}</div>
+    </div>
+    <p style="margin-top:32px;font-size:12px;color:#666;border-top:1px solid #ddd;padding-top:10px">
+      I, <strong>${emp.name}</strong>, hereby accept the appointment on the above terms and conditions.<br><br>
+      Signature: _________________________ &nbsp;&nbsp; Date: _____________
+    </p>`;
+  }
+  document.getElementById('letterPreviewContent').innerHTML = html;
+}
+
+function printLetter() {
+  const content = document.getElementById('letterPreviewContent').innerHTML;
+  const c = state.company;
+  const win = window.open('','_blank','width=820,height=960');
+  win.document.write(`<!DOCTYPE html><html><head><title>Letter - ${c.name}</title>
+  <style>
+    body { font-family:'Times New Roman',serif; font-size:14px; line-height:1.7; color:#111; padding:40px 60px; }
+    .ltr-header { text-align:center; padding-bottom:16px; margin-bottom:24px; }
+    .ltr-company { font-size:22px; font-weight:700; letter-spacing:1px; }
+    .ltr-tagline { font-size:11px; color:#666; margin-top:2px; }
+    .ltr-address { font-size:11px; color:#555; margin-top:4px; }
+    .ltr-ref { color:#555; font-size:13px; margin-bottom:16px; }
+    h4 { text-align:center; text-decoration:underline; font-size:15px; margin:20px 0 16px; letter-spacing:1px; }
+    p { margin-bottom:14px; text-align:justify; }
+    .ltr-sign { margin-top:40px; }
+    table { width:100%; border-collapse:collapse; margin:16px 0; }
+    table td { padding:6px 10px; border:1px solid #ddd; font-size:13px; }
+    table td:first-child { font-weight:600; width:40%; background:#f9f9f9; }
+    @media print { body { padding:20px 40px; } }
+  </style></head><body>${content}</body></html>`);
+  win.document.close();
+  setTimeout(()=>{ win.focus(); win.print(); }, 500);
+}
+
+function gmailLetter() {
+  const emp = state.employees.find(e=>e.id===currentLetterEmpId);
+  if(!emp) return;
+  const c = state.company;
+  const type = currentLetterType==='offer'?'Offer Letter':'Appointment Letter';
+  const subject = encodeURIComponent(`${type} - ${emp.name} | ${c.name}`);
+  const body = encodeURIComponent(
+    `Dear ${emp.name},\n\nPlease find attached your ${type} from ${c.name}.\n\nKindly review the document and revert with your signed acceptance at your earliest convenience.\n\nShould you have any queries, please do not hesitate to reach out to us${c.email?' at '+c.email:''}.\n\nWarm regards,\n${c.signatoryName}\n${c.signatoryDesig}\n${c.name}\n${c.address||''}`
+  );
+  const to = emp.email ? encodeURIComponent(emp.email) : '';
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`,'_blank');
+  showNotif('Gmail compose window opened 📧','success');
+}
+
+// ═══════════ COMPANY SETTINGS ═══════════
+let activeTplField = null;
+function setActiveTpl(el) { activeTplField = el; }
+function switchTplTab(type) {
+  document.getElementById('tplOfferTab').classList.toggle('active', type==='offer');
+  document.getElementById('tplAppointTab').classList.toggle('active', type==='appoint');
+  document.getElementById('tplOfferEditor').style.display = type==='offer'?'block':'none';
+  document.getElementById('tplAppointEditor').style.display = type==='appoint'?'block':'none';
+}
+function insertPlaceholder(ph) {
+  if(!activeTplField) { showNotif('Click inside a text field first, then insert placeholder','error'); return; }
+  const el = activeTplField;
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  el.value = el.value.substring(0,start) + ph + el.value.substring(end);
+  el.selectionStart = el.selectionEnd = start + ph.length;
+  el.focus();
+}
+
+function renderSettings() {
+  const c = state.company;
+  document.getElementById('sCompName').value = c.name;
+  document.getElementById('sTagline').value = c.tagline;
+  document.getElementById('sAddress').value = c.address;
+  document.getElementById('sEmail').value = c.email;
+  document.getElementById('sPhone').value = c.phone||'';
+  document.getElementById('sWebsite').value = c.website||'';
+  document.getElementById('sCin').value = c.cin||'';
+  document.getElementById('sGstin').value = c.gstin||'';
+  document.getElementById('sColor').value = c.letterColor||'#b45309';
+  document.getElementById('sColorHex').textContent = c.letterColor||'#b45309';
+  document.getElementById('sSignName').value = c.signatoryName||'';
+  document.getElementById('sSignDesig').value = c.signatoryDesig||'';
+  document.getElementById('sWorkHours').value = c.workHours||'';
+  document.getElementById('sProbation').value = c.probation||'';
+  document.getElementById('sNotice').value = c.noticePeriod||'';
+  // Templates
+  document.getElementById('tplOfferOpening').value = c.offerOpening||'';
+  document.getElementById('tplOfferClosing').value = c.offerClosing||'';
+  document.getElementById('tplOfferTerms').value = c.offerTerms||'';
+  document.getElementById('tplAppointOpening').value = c.appointOpening||'';
+  document.getElementById('tplAppointClosing').value = c.appointClosing||'';
+  document.getElementById('tplAppointClause').value = c.appointClause||'';
+  // Logo
+  if(c.logoDataUrl) {
+    document.getElementById('logoPreviewImg').src = c.logoDataUrl;
+    document.getElementById('logoPreviewImg').style.display='block';
+    document.getElementById('logoPlaceholder').style.display='none';
+  }
+  // Signature
+  if(c.signatureDataUrl) {
+    document.getElementById('signPreviewImg').src = c.signatureDataUrl;
+    document.getElementById('signPreviewImg').style.display='block';
+    document.getElementById('signPlaceholder').style.display='none';
+  }
+  previewLetterhead();
+}
+
+function previewLetterhead() {
+  const color = document.getElementById('sColor')?.value || '#b45309';
+  document.getElementById('sColorHex').textContent = color;
+  const name = document.getElementById('sCompName')?.value || '';
+  const tagline = document.getElementById('sTagline')?.value || '';
+  const address = document.getElementById('sAddress')?.value || '';
+  const email = document.getElementById('sEmail')?.value || '';
+  const phone = document.getElementById('sPhone')?.value || '';
+  const website = document.getElementById('sWebsite')?.value || '';
+  const cin = document.getElementById('sCin')?.value || '';
+  const gstin = document.getElementById('sGstin')?.value || '';
+  const signName = document.getElementById('sSignName')?.value || '';
+  const signDesig = document.getElementById('sSignDesig')?.value || '';
+  const logoSrc = state.company.logoDataUrl || '';
+  const signSrc = state.company.signatureDataUrl || '';
+  const extraLine = [phone, website].filter(Boolean).join(' | ');
+  const regLine = [cin?'CIN: '+cin:'', gstin?'GSTIN: '+gstin:''].filter(Boolean).join(' | ');
+  const box = document.getElementById('lhPreviewBox');
+  if(!box) return;
+  box.innerHTML = `
+    <div style="text-align:center;border-bottom:2px solid ${color};padding-bottom:14px;margin-bottom:12px;">
+      ${logoSrc?`<img src="${logoSrc}" style="max-height:56px;max-width:160px;object-fit:contain;display:block;margin:0 auto 6px;" />`:''}
+      <div style="font-size:18px;font-weight:700;color:${color};letter-spacing:.5px;font-family:serif">${name||'Company Name'}</div>
+      ${tagline?`<div style="font-size:11px;color:#888;margin-top:2px">${tagline}</div>`:''}
+      <div style="font-size:11px;color:#666;margin-top:3px">${[address,email,extraLine].filter(Boolean).join(' | ')}</div>
+      ${regLine?`<div style="font-size:10px;color:#999;margin-top:2px">${regLine}</div>`:''}
+    </div>
+    <div style="font-size:11px;color:#888;font-family:serif;display:flex;justify-content:space-between;margin-bottom:10px;">
+      <span>Ref No: OL-XXXX-001</span><span>Date: ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</span>
+    </div>
+    <div style="font-size:12px;color:#555;font-family:serif;font-style:italic">[ Letter body will appear here... ]</div>
+    <div style="margin-top:16px;font-family:serif;">
+      <div style="font-size:12px;color:#555">Yours sincerely,</div>
+      ${signSrc?`<img src="${signSrc}" style="max-height:44px;max-width:120px;object-fit:contain;display:block;margin:6px 0;" />`:'<div style="height:36px;border-bottom:1px solid #aaa;width:120px;margin:6px 0;"></div>'}
+      <div style="font-size:12px;font-weight:700;color:#222">${signName||'Signatory Name'}</div>
+      <div style="font-size:11px;color:#666">${signDesig||'Designation'}</div>
+      <div style="font-size:11px;color:#666">${name||'Company Name'}</div>
+    </div>`;
+}
+
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    state.company.logoDataUrl = e.target.result;
+    document.getElementById('logoPreviewImg').src = e.target.result;
+    document.getElementById('logoPreviewImg').style.display='block';
+    document.getElementById('logoPlaceholder').style.display='none';
+    previewLetterhead();
+    showNotif('Logo uploaded ✓','success');
+    autoSave();
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleSignUpload(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    state.company.signatureDataUrl = e.target.result;
+    document.getElementById('signPreviewImg').src = e.target.result;
+    document.getElementById('signPreviewImg').style.display='block';
+    document.getElementById('signPlaceholder').style.display='none';
+    previewLetterhead();
+    showNotif('Signature uploaded ✓','success');
+    autoSave();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  state.company.logoDataUrl = null;
+  document.getElementById('logoPreviewImg').src='';
+  document.getElementById('logoPreviewImg').style.display='none';
+  document.getElementById('logoPlaceholder').style.display='block';
+  document.getElementById('logoFileInput').value='';
+  previewLetterhead();
+  showNotif('Logo removed','success');
+    autoSave();
+}
+
+function removeSign() {
+  state.company.signatureDataUrl = null;
+  document.getElementById('signPreviewImg').src='';
+  document.getElementById('signPreviewImg').style.display='none';
+  document.getElementById('signPlaceholder').style.display='block';
+  document.getElementById('signFileInput').value='';
+  previewLetterhead();
+  showNotif('Signature removed','success');
+    autoSave();
+}
+
+function saveSettings() {
+  state.company.name = document.getElementById('sCompName').value.trim() || state.company.name;
+  state.company.tagline = document.getElementById('sTagline').value.trim();
+  state.company.address = document.getElementById('sAddress').value.trim();
+  state.company.email = document.getElementById('sEmail').value.trim();
+  state.company.phone = document.getElementById('sPhone').value.trim();
+  state.company.website = document.getElementById('sWebsite').value.trim();
+  state.company.cin = document.getElementById('sCin').value.trim();
+  state.company.gstin = document.getElementById('sGstin').value.trim();
+  state.company.letterColor = document.getElementById('sColor').value;
+  state.company.signatoryName = document.getElementById('sSignName').value.trim();
+  state.company.signatoryDesig = document.getElementById('sSignDesig').value.trim();
+  state.company.workHours = document.getElementById('sWorkHours').value.trim();
+  state.company.probation = document.getElementById('sProbation').value.trim();
+  state.company.noticePeriod = document.getElementById('sNotice').value.trim();
+  // Templates
+  state.company.offerOpening = document.getElementById('tplOfferOpening').value.trim();
+  state.company.offerClosing = document.getElementById('tplOfferClosing').value.trim();
+  state.company.offerTerms = document.getElementById('tplOfferTerms').value.trim();
+  state.company.appointOpening = document.getElementById('tplAppointOpening').value.trim();
+  state.company.appointClosing = document.getElementById('tplAppointClosing').value.trim();
+  state.company.appointClause = document.getElementById('tplAppointClause').value.trim();
+  showNotif('Company settings saved! ✓','success');
+    autoSave();
+  previewLetterhead();
+}
+
+function resetSettings() {
+  if(!confirm('Reset all company settings to default?')) return;
+  state.company = {
+    name:'Nitya Marketing Management', tagline:'Excellence in Marketing & Business Solutions',
+    address:'Mumbai, Maharashtra', email:'hr@nitya-marketing.com', phone:'', website:'', cin:'', gstin:'',
+    logoDataUrl:null, signatureDataUrl:null,
+    signatoryName:'Authorized Signatory', signatoryDesig:'HR Manager',
+    letterColor:'#b45309', workHours:'9:00 AM – 6:30 PM (Mon – Sat)',
+    probation:'3 Months from Date of Joining', noticePeriod:'30 Days (post-confirmation)',
+    offerOpening:'We are pleased to inform you that after careful evaluation of your profile and interview process, {{company}} is delighted to extend this offer of employment to you. We believe your skills and experience will be a valuable addition to our growing team.',
+    offerClosing:'We look forward to welcoming you to the {{company}} family. Should you have any queries, please do not hesitate to contact our HR department.',
+    offerTerms:'This offer is subject to satisfactory background verification and submission of all required documents prior to your joining date. Kindly confirm your acceptance of this offer by signing and returning a copy of this letter.',
+    appointOpening:'With reference to your application and the subsequent interview, we are pleased to appoint you as {{role}} in the {{department}} Department at {{company}}, effective from {{joinDate}}.',
+    appointClosing:'Please sign and return a copy of this letter as a token of your acceptance of the above terms and conditions. We look forward to a long and mutually beneficial association.',
+    appointClause:'You shall not disclose any confidential information, trade secrets, or proprietary data of the company to any third party during or after your employment. You are expected to maintain the highest standards of professionalism, integrity, and conduct in all dealings on behalf of the company.',
+  };
+  renderSettings();
+  showNotif('Reset to defaults ✓','success');
+    autoSave();
+}
+
+
+// ═══════════ MY LETTERS (Employee Page) ═══════════
+function renderMyLetters() {
+  const emp = state.currentUser.empData;
+  if(!emp) return;
+  const grid = document.getElementById('lettersGrid');
+  grid.innerHTML = `
+    <div class="letter-card">
+      <div class="lc-icon">📋</div>
+      <div class="lc-title">Offer Letter</div>
+      <div class="lc-sub">Official offer of employment from Nitya Marketing Management</div>
+      <div style="font-size:12px;color:var(--muted)">Issued on: ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
+      <div class="letter-card-actions">
+        <button class="btn-letter view" onclick="empViewLetter('offer')">👁️ View</button>
+        <button class="btn-letter download" onclick="empPrintLetter('offer')">🖨️ Print/PDF</button>
+      </div>
+    </div>
+    <div class="letter-card">
+      <div class="lc-icon">📑</div>
+      <div class="lc-title">Appointment Letter</div>
+      <div class="lc-sub">Official appointment letter with terms & conditions</div>
+      <div style="font-size:12px;color:var(--muted)">Issued on: ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
+      <div class="letter-card-actions">
+        <button class="btn-letter view" onclick="empViewLetter('appoint')">👁️ View</button>
+        <button class="btn-letter download" onclick="empPrintLetter('appoint')">🖨️ Print/PDF</button>
+      </div>
+    </div>`;
+}
+
+function empViewLetter(type) {
+  const emp = state.currentUser.empData;
+  currentLetterEmpId = emp.id;
+  currentLetterType = type;
+  document.getElementById('offerTab').classList.toggle('active', type==='offer');
+  document.getElementById('appointTab').classList.toggle('active', type==='appoint');
+  document.getElementById('letterModalTitle').textContent = '📄 My Letters';
+  renderLetterContent(emp.id, type);
+  document.getElementById('letterModal').classList.add('open');
+}
+
+function empPrintLetter(type) {
+  const emp = state.currentUser.empData;
+  currentLetterEmpId = emp.id;
+  currentLetterType = type;
+  renderLetterContent(emp.id, type);
+  setTimeout(printLetter, 200);
+}
+
+function empGmailLetter(type) {
+  const emp = state.currentUser.empData;
+  currentLetterEmpId = emp.id;
+  currentLetterType = type;
+  gmailLetter();
+}
+
+
+function showNotif(msg, type='success') {
+  const n=document.getElementById('notif');
+  n.textContent=msg; n.className='notif '+(type||'');
+  void n.offsetWidth; n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'),3000);
+}
+
+// ═══════════ FIREBASE SYNC ═══════════
+async function saveToFirebase() {
+  if(!db) return; // offline mode — skip
+  try {
+    await db.collection('nitya_data').doc('main').set({
+      employees: state.employees,
+      attendance: state.attendance,
+      leaves: state.leaves,
+      company: state.company,
+      updatedAt: new Date().toISOString()
+    });
+  } catch(e) { console.error('Firebase save error:', e); }
+}
+
+async function loadFromFirebase() {
+  if(!db) {
+    console.warn('Firebase not available — running offline');
+    return;
+  }
+  try {
+    showLoadingOverlay(true);
+    const doc = await db.collection('nitya_data').doc('main').get();
+    if(doc.exists) {
+      const data = doc.data();
+      if(data.employees && data.employees.length) state.employees = data.employees;
+      if(data.attendance) state.attendance = data.attendance;
+      if(data.leaves) state.leaves = data.leaves;
+      if(data.company) state.company = { ...state.company, ...data.company };
+      showNotif('Data loaded from cloud ☁️','success');
+    }
+    showLoadingOverlay(false);
+  } catch(e) {
+    console.error('Firebase load error:', e);
+    showLoadingOverlay(false);
+    showNotif('Cloud sync error — working offline','error');
+  }
+}
+
+function showLoadingOverlay(show) {
+  let el = document.getElementById('loadingOverlay');
+  if(!el) {
+    el = document.createElement('div');
+    el.id = 'loadingOverlay';
+    el.innerHTML = '<div style="text-align:center"><div style="font-size:40px;margin-bottom:14px">🔥</div><div style="font-size:18px;color:#f59e0b;font-family:Syne,sans-serif;font-weight:700">Nitya HR</div><div style="font-size:13px;color:#6b6b80;margin-top:6px">Loading data from cloud...</div></div>';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,15,0.96);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    document.body.appendChild(el);
+  }
+  el.style.display = show ? 'flex' : 'none';
+}
+
+function autoSave() {
+  saveToFirebase();
+}
+
+// Init date on topbar
+document.getElementById('topbarDate').textContent = new Date().toLocaleDateString('en-IN');
+
+// Load Firebase data on page load
+window.addEventListener('load', loadFromFirebase);
+
+</script>
+</body>
+</html>
