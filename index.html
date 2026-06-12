@@ -530,31 +530,44 @@
         </div>
       </div>
       <div class="stats-grid">
-        <div class="stat-card green">
+        <div class="stat-card green" onclick="showDashDetail('present')" style="cursor:pointer;">
           <div class="label">Present Today</div>
           <div class="value" id="statPresent">0</div>
-          <div class="sub">employees checked in</div>
+          <div class="sub">tap to see details</div>
         </div>
-        <div class="stat-card red">
+        <div class="stat-card red" onclick="showDashDetail('absent')" style="cursor:pointer;">
           <div class="label">Absent Today</div>
           <div class="value" id="statAbsent">0</div>
-          <div class="sub">not marked yet</div>
+          <div class="sub">tap to see details</div>
         </div>
-        <div class="stat-card yellow">
+        <div class="stat-card yellow" onclick="showDashDetail('onleave')" style="cursor:pointer;">
           <div class="label">On Leave</div>
           <div class="value" id="statLeave">0</div>
-          <div class="sub">approved leaves</div>
+          <div class="sub">tap to see details</div>
         </div>
-        <div class="stat-card purple">
+        <div class="stat-card purple" onclick="showDashDetail('pending')" style="cursor:pointer;">
           <div class="label">Pending Leaves</div>
           <div class="value" id="statPending">0</div>
-          <div class="sub">awaiting approval</div>
+          <div class="sub">tap to see details</div>
+        </div>
+        <div class="stat-card" onclick="showDashDetail('rejected')" style="cursor:pointer;background:var(--card);border:1px solid rgba(239,68,68,0.3);">
+          <div class="label" style="color:#ef4444;">Rejected Leaves</div>
+          <div class="value" id="statRejected" style="color:#ef4444;">0</div>
+          <div class="sub">tap to see details</div>
+        </div>
+      </div>
+      <!-- Detail Panel -->
+      <div id="dashDetailPanel" style="display:none;margin-bottom:20px;">
+        <div class="table-wrap">
+          <div class="table-header" style="justify-content:space-between;">
+            <h3 id="dashDetailTitle">Details</h3>
+            <button class="btn-cancel" onclick="hideDashDetail()">✕ Close</button>
+          </div>
+          <div id="dashDetailContent"></div>
         </div>
       </div>
       <div class="table-wrap">
-        <div class="table-header">
-          <h3>Today's Attendance</h3>
-        </div>
+        <div class="table-header"><h3>Today's Attendance</h3></div>
         <table>
           <thead><tr><th>Employee</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Location</th></tr></thead>
           <tbody id="todayTable"></tbody>
@@ -597,8 +610,7 @@
     <div class="page" id="page-leave">
       <h2 class="section-title">Leave Management</h2>
       <p class="section-sub" id="leaveSubtitle">Apply for leave</p>
-      <!-- Leave Balance Card (Employee only) -->
-      <div id="leaveBalanceCard" style="display:none;"></div>
+      <div id="leaveBalanceCard" style="display:none;margin-bottom:16px;"></div>
       <div id="leaveApplySection">
         <div class="leave-form">
           <h3 style="margin-bottom:16px;font-size:16px;">Apply for Leave</h3>
@@ -607,7 +619,7 @@
               <label>Leave Type</label>
               <select id="leaveType">
                 <option>Sick Leave</option>
-                                <option>Earned Leave</option>
+                <option>Earned Leave</option>
                 <option>Unpaid Leave</option>
               </select>
             </div>
@@ -617,19 +629,10 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="field">
-              <label>From Date</label>
-              <input type="date" id="leaveFrom" />
-            </div>
-            <div class="field">
-              <label>To Date</label>
-              <input type="date" id="leaveTo" />
-            </div>
+            <div class="field"><label>From Date</label><input type="date" id="leaveFrom" /></div>
+            <div class="field"><label>To Date</label><input type="date" id="leaveTo" /></div>
           </div>
-          <div class="field">
-            <label>Reason</label>
-            <input type="text" id="leaveReason" placeholder="Brief reason for leave" />
-          </div>
+          <div class="field"><label>Reason</label><input type="text" id="leaveReason" placeholder="Brief reason for leave" /></div>
           <button class="btn-submit" onclick="applyLeave()">Submit Request</button>
         </div>
       </div>
@@ -640,7 +643,6 @@
           <tbody id="leaveTable"></tbody>
         </table>
       </div>
-      <!-- WFH Requests (Admin only) -->
       <div class="table-wrap" id="wfhRequestsWrap" style="margin-top:20px;display:none;">
         <div class="table-header"><h3>🏠 WFH Requests</h3></div>
         <table>
@@ -648,33 +650,6 @@
           <tbody id="wfhTable"></tbody>
         </table>
       </div>
-    </div>
-
-    <!-- TASKS PAGE -->
-    <div class="page" id="page-tasks">
-      <h2 class="section-title">📋 Tasks</h2>
-      <p class="section-sub" id="taskSubtitle">Manage and track tasks</p>
-      <div id="taskStatsWrap" style="display:none;margin-bottom:20px;">
-        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
-          <div class="stat-card"><div class="label">Total</div><div class="value" id="tStatTotal">0</div><div class="sub">tasks</div></div>
-          <div class="stat-card yellow"><div class="label">Todo</div><div class="value" id="tStatTodo">0</div><div class="sub">not started</div></div>
-          <div class="stat-card purple"><div class="label">In Progress</div><div class="value" id="tStatProgress">0</div><div class="sub">ongoing</div></div>
-          <div class="stat-card green"><div class="label">Done</div><div class="value" id="tStatDone">0</div><div class="sub">completed</div></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
-        <select id="taskFilterStatus" onchange="renderTasks()" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;">
-          <option value="all">All Status</option>
-          <option value="todo">Todo</option>
-          <option value="inprogress">In Progress</option>
-          <option value="done">Done</option>
-        </select>
-        <select id="taskFilterEmp" onchange="renderTasks()" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;display:none;">
-          <option value="all">All Employees</option>
-        </select>
-        <button class="btn-add" onclick="openTaskModal()" style="margin-left:auto;">+ Add Task</button>
-      </div>
-      <div id="taskBoard"></div>
     </div>
 
     <!-- SALARY -->
@@ -789,6 +764,71 @@
           <tbody id="empTable"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- SECURITY PAGE (Admin) -->
+    <div class="page" id="page-security">
+      <h2 class="section-title">🔒 Security Center</h2>
+      <p class="section-sub">Per-employee connection restrictions & login alerts</p>
+
+      <!-- Per-Employee Connection Settings -->
+      <div class="table-wrap" style="margin-bottom:24px;">
+        <div class="table-header">
+          <h3>Employee Connection Type</h3>
+          <div style="font-size:12px;color:var(--muted);">Set allowed connection for each employee</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Connection Type</th>
+              <th>Registered IP / Info</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="securityEmpTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Login Alerts -->
+      <div class="table-wrap">
+        <div class="table-header" style="justify-content:space-between;">
+          <h3>⚠️ Login Alerts</h3>
+          <button class="btn-reject" style="font-size:12px;padding:6px 12px;" onclick="clearLoginAlerts()">Clear All</button>
+        </div>
+        <div id="loginAlertsTable">
+          <p style="padding:20px;color:var(--muted);text-align:center;">No alerts yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY LETTERS (Employee) -->
+    <!-- TASKS PAGE -->
+    <div class="page" id="page-tasks">
+      <h2 class="section-title">📋 Tasks</h2>
+      <p class="section-sub" id="taskSubtitle">Manage and track tasks</p>
+      <div id="taskStatsWrap" style="display:none;margin-bottom:20px;">
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card"><div class="label">Total</div><div class="value" id="tStatTotal">0</div></div>
+          <div class="stat-card yellow"><div class="label">Todo</div><div class="value" id="tStatTodo">0</div></div>
+          <div class="stat-card purple"><div class="label">In Progress</div><div class="value" id="tStatProgress">0</div></div>
+          <div class="stat-card green"><div class="label">Done</div><div class="value" id="tStatDone">0</div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+        <select id="taskFilterStatus" onchange="renderTasks()" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;">
+          <option value="all">All Status</option>
+          <option value="todo">Todo</option>
+          <option value="inprogress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+        <select id="taskFilterEmp" onchange="renderTasks()" style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;display:none;">
+          <option value="all">All Employees</option>
+        </select>
+        <button class="btn-add" onclick="openTaskModal()" style="margin-left:auto;">+ Add Task</button>
+      </div>
+      <div id="taskBoard"></div>
     </div>
 
     <!-- MY LETTERS (Employee) -->
@@ -956,26 +996,21 @@
         </div>
       </div>
 
-      <!-- SECURITY SETTINGS -->
+      <!-- OFFICE WIFI SECURITY -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;">
-        <h3 style="font-size:15px;margin-bottom:6px;color:var(--accent)">🔒 Security Settings</h3>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:18px;">WiFi restriction & device fingerprint protection</p>
+        <h3 style="font-size:15px;margin-bottom:6px;color:var(--accent)">🔒 WiFi Security</h3>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);">
           <input type="checkbox" id="sWifiRestriction" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);" onchange="toggleWifiField()" />
           <div><div style="font-size:14px;font-weight:600;">Enable Office WiFi Restriction</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Employees can only check-in from office network</div></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Employees on Office WiFi type can only check-in from office network</div></div>
         </div>
         <div id="wifiIPField" style="display:none;">
-          <div class="field" style="margin-bottom:10px;">
-            <label>Office Public IP Address</label>
-            <input type="text" id="sOfficeIP" placeholder="e.g. 103.21.58.120" style="margin-bottom:8px;" />
-            <button class="btn-approve" style="width:100%;padding:12px;font-size:14px;border-radius:10px;" onclick="detectMyIP()">🔍 Detect My IP (connect to office WiFi first)</button>
-          </div>
+          <div class="field"><label>Office Public IP Address</label><input type="text" id="sOfficeIP" placeholder="e.g. 103.21.58.120" /></div>
+          <button class="btn-approve" style="width:100%;padding:12px;font-size:14px;border-radius:10px;" onclick="detectMyIP()">🔍 Detect My IP (connect to office WiFi first)</button>
         </div>
         <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);">
-          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">📱 Device Fingerprint Protection</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Each employee's account is locked to their registered device</div>
-          <div id="deviceList" style="font-size:12px;color:var(--muted);margin-bottom:12px;"></div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">📱 Registered Devices</div>
+          <div id="deviceList" style="font-size:12px;color:var(--muted);margin-bottom:4px;"></div>
         </div>
       </div>
 
@@ -991,17 +1026,12 @@
         <button class="btn-submit" onclick="resetAdminPassword()" style="width:100%;margin-top:4px;">🔑 Update Admin Credentials</button>
       </div>
 
-      <!-- WHATSAPP NOTIFICATIONS -->
+      <!-- WHATSAPP -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;">
         <h3 style="font-size:15px;margin-bottom:6px;color:var(--accent)">📱 WhatsApp Notifications</h3>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:18px;">Work reports from employees will be sent to this number</p>
-        <div class="field">
-          <label>Admin/Boss WhatsApp Number (with country code)</label>
-          <input type="text" id="sAdminWhatsApp" placeholder="e.g. 919876543210" />
-        </div>
-        <div style="font-size:12px;color:var(--muted);padding:10px 12px;background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.2);border-radius:8px;">
-          💡 Format: Country code + number, no spaces. Example: <strong style="color:#25d366">919876543210</strong>
-        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:18px;">Employee work reports will be sent to this number</p>
+        <div class="field"><label>Boss/Admin WhatsApp Number (with country code)</label><input type="text" id="sAdminWhatsApp" placeholder="e.g. 919876543210" /></div>
+        <div style="font-size:12px;color:var(--muted);padding:10px 12px;background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.2);border-radius:8px;">💡 Format: 91XXXXXXXXXX (no spaces, no +)</div>
       </div>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -1036,17 +1066,25 @@
     <div class="form-row">
       <div class="field"><label>Join Date</label><input type="date" id="newEmpJoin" /></div>
       <div class="field">
-        <label>Employee Photo (max 100KB)</label>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <div id="empPhotoPreview" style="width:56px;height:56px;border-radius:50%;background:var(--bg);border:2px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <span id="empPhotoIcon" style="font-size:24px;">👤</span>
-            <img id="empPhotoImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;" />
-          </div>
-          <div>
-            <input type="file" id="empPhotoFile" accept="image/*" style="display:none" onchange="handleEmpPhoto(event)" />
-            <button type="button" class="btn-letter view" style="padding:7px 14px;font-size:12px;" onclick="document.getElementById('empPhotoFile').click()">📷 Upload</button>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Max 100KB</div>
-          </div>
+        <label>🔒 Connection Type</label>
+        <select id="newEmpConnType" style="width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;">
+          <option value="office_wifi">🏢 Office WiFi Only</option>
+          <option value="wfh">🏠 Work From Home (WFH)</option>
+          <option value="regular">🌐 Regular (Any Connection)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>📷 Employee Photo (max 100KB)</label>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div id="empPhotoPreview" style="width:56px;height:56px;border-radius:50%;background:var(--bg);border:2px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span id="empPhotoIcon" style="font-size:24px;">👤</span>
+          <img id="empPhotoImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;" />
+        </div>
+        <div>
+          <input type="file" id="empPhotoFile" accept="image/*" style="display:none" onchange="handleEmpPhoto(event)" />
+          <button type="button" class="btn-letter view" style="padding:7px 14px;font-size:12px;" onclick="document.getElementById('empPhotoFile').click()">📷 Upload</button>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Max 100KB • JPG/PNG</div>
         </div>
       </div>
     </div>
@@ -1099,16 +1137,13 @@
   </div>
 </div>
 
-<!-- NOTIFICATION -->
-<div class="notif" id="notif"></div>
-
 <!-- TASK MODAL -->
 <div class="modal-overlay" id="taskModal">
   <div class="modal">
     <h3 id="taskModalTitle">➕ Add Task</h3>
     <input type="hidden" id="editTaskId" />
     <div class="field"><label>Task Title</label><input type="text" id="taskTitle" placeholder="e.g. Prepare monthly report" /></div>
-    <div class="field"><label>Description (optional)</label><textarea id="taskDesc" rows="3" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;box-sizing:border-box;" placeholder="Task details..."></textarea></div>
+    <div class="field"><label>Description (optional)</label><textarea id="taskDesc" rows="3" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;box-sizing:border-box;"></textarea></div>
     <div class="form-row">
       <div class="field"><label>Assign To</label><select id="taskAssignTo"></select></div>
       <div class="field"><label>Status</label><select id="taskStatus"><option value="todo">Todo</option><option value="inprogress">In Progress</option><option value="done">Done</option></select></div>
@@ -1126,8 +1161,8 @@
     <h3 style="margin-bottom:6px;">🏠 Work From Home Request</h3>
     <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Request admin approval for WFH</p>
     <div class="field"><label>Date</label><input type="date" id="wfhDate" /></div>
-    <div class="field"><label>Reason</label><textarea id="wfhReason" rows="3" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;box-sizing:border-box;" placeholder="Reason for WFH..."></textarea></div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+    <div class="field"><label>Reason</label><textarea id="wfhReason" rows="3" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;box-sizing:border-box;"></textarea></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn-cancel" onclick="closeWfhModal()">Cancel</button>
       <button class="btn-submit" onclick="submitWfhRequest()">Submit Request</button>
     </div>
@@ -1150,6 +1185,9 @@
   </div>
 </div>
 
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
 <script>
 // ═══════════ DATA STORE ═══════════
 let state = {
@@ -1165,6 +1203,7 @@ let state = {
   adminCreds: { username:'Nityaadmin', password:'nitya2502' },
   leaveBalances: {},
   tasks: [],
+  loginAlerts: [],
   company: {
     name: 'Nitya Marketing Management',
     tagline: 'Excellence in Marketing & Business Solutions',
@@ -1182,7 +1221,6 @@ let state = {
     workHours: '9:00 AM – 6:30 PM (Mon – Sat)',
     probation: '3 Months from Date of Joining',
     noticePeriod: '30 Days (post-confirmation)',
-    // Letter Templates
     offerOpening: 'We are pleased to inform you that after careful evaluation of your profile and interview process, {{company}} is delighted to extend this offer of employment to you. We believe your skills and experience will be a valuable addition to our growing team.',
     offerClosing: 'We look forward to welcoming you to the {{company}} family. Should you have any queries, please do not hesitate to contact our HR department.',
     offerTerms: 'This offer is subject to satisfactory background verification and submission of all required documents prior to your joining date. Kindly confirm your acceptance of this offer by signing and returning a copy of this letter.',
@@ -1200,19 +1238,21 @@ function fmtDate(d) {
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-// ═══════════ AUTH ═══════════
-function resetAllLeaveBalancesMarch() {
-  const now = new Date();
-  if(now.getMonth() === 3 && now.getDate() === 1) {
-    state.employees.forEach(e=>{
-      if(state.leaveBalances[e.id]) {
-        state.leaveBalances[e.id].earnedLeave = 0;
-        state.leaveBalances[e.id].lastCreditedMonth = null;
-      }
-    });
-    autoSave();
-  }
+function calcHoursWorked(checkIn, checkOut) {
+  try {
+    const parseTime = (t) => {
+      const upper = t.toUpperCase();
+      const ampm = upper.includes('AM') || upper.includes('PM');
+      const clean = upper.replace(/[^0-9:]/g,'');
+      let [h,m] = clean.split(':').map(Number);
+      if(ampm){if(upper.includes('PM')&&h!==12)h+=12;if(upper.includes('AM')&&h===12)h=0;}
+      return h*60+(m||0);
+    };
+    return (parseTime(checkOut)-parseTime(checkIn))/60;
+  } catch(e){return 9;}
 }
+
+// ═══════════ AUTH ═══════════
 function switchRole(r) {
   state.loginRole = r;
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active', (r==='admin'&&i===0)||(r==='employee'&&i===1)));
@@ -1221,21 +1261,67 @@ function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value.trim();
   if(!u||!p){showNotif('Please enter username and password','error');return;}
+
+  // Admin check
   if(u===state.adminCreds.username && p===state.adminCreds.password){
     state.currentUser={id:'admin',name:'Admin',role:'admin'};
     state.currentRole='admin'; state.loginRole='admin'; launchApp(); return;
   }
+
+  // Employee check
   const emp=state.employees.find(e=>e.username===u&&e.password===p);
   if(emp){
-    if(!isDeviceRegistered(emp.id)){showNotif('⚠️ Account registered on another device. Contact admin.','error');return;}
-    if(!state.deviceFingerprints[emp.id]) registerDevice(emp.id);
-    state.currentUser={id:emp.id,name:emp.name,role:'employee',empData:emp};
-    state.currentRole='employee'; state.loginRole='employee'; launchApp(); return;
+    const connType=emp.connType||'office_wifi';
+    if(!isDeviceRegistered(emp.id)){
+      logLoginAlert(emp,'device_mismatch','Login attempted from unregistered device');
+      showNotif('⚠️ Account registered on another device. Contact admin.','error');
+      return;
+    }
+    checkConnectionAllowed(emp,connType).then(result=>{
+      if(!result.ok){
+        logLoginAlert(emp,'connection_blocked',result.msg);
+        showNotif(result.msg,'error');
+        return;
+      }
+      if(!state.deviceFingerprints[emp.id]) registerDevice(emp.id);
+      state.currentUser={id:emp.id,name:emp.name,role:'employee',empData:emp};
+      state.currentRole='employee'; state.loginRole='employee'; launchApp();
+    });
+    return;
   }
   showNotif('Invalid username or password. Try again.','error');
 }
+
+async function checkConnectionAllowed(emp, connType) {
+  if(connType==='regular') return {ok:true};
+  const currentIP = await getCurrentPublicIP();
+  if(connType==='office_wifi'){
+    const officeIP=state.company.officeIP;
+    if(!officeIP) return {ok:true};
+    if(!currentIP) return {ok:false,msg:'Cannot verify network. Check internet connection.'};
+    if(currentIP!==officeIP) return {ok:false,msg:`Office WiFi required. You are not on office network. (Your IP: ${currentIP})`};
+    return {ok:true};
+  }
+  if(connType==='wfh'){
+    if(!emp.wfhIP){emp.wfhIP=currentIP;autoSave();return {ok:true};}
+    if(!currentIP) return {ok:false,msg:'Cannot verify network connection.'};
+    if(currentIP!==emp.wfhIP) return {ok:false,msg:`WFH connection not recognized. Login only from your registered home network. (Your IP: ${currentIP})`};
+    return {ok:true};
+  }
+  return {ok:true};
+}
+
+function logLoginAlert(emp, type, message) {
+  state.loginAlerts.unshift({
+    id:'alert'+Date.now(), empId:emp.id, empName:emp.name,
+    type, message, time:new Date().toLocaleString('en-IN')
+  });
+  if(state.loginAlerts.length>50) state.loginAlerts=state.loginAlerts.slice(0,50);
+  autoSave();
+}
 function doLogout() {
   state.currentUser = null;
+  localStorage.removeItem('nitya_session');
   document.getElementById('app').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('loginUser').value='';
@@ -1263,6 +1349,8 @@ function buildNav() {
     {id:'salary',label:'Salary'},
     {id:'reports',label:'Reports'},
     {id:'employees',label:'Employees'},
+    {id:'tasks',label:'📋 Tasks'},
+    {id:'security',label:'🔒 Security'},
     {id:'settings',label:'⚙️ Settings'},
   ];
   const empPages = [
@@ -1270,6 +1358,7 @@ function buildNav() {
     {id:'attendance',label:'My Attendance'},
     {id:'leave',label:'Leave'},
     {id:'salary',label:'My Salary'},
+    {id:'tasks',label:'📋 Tasks'},
     {id:'letters',label:'📄 My Letters'},
   ];
   const pages = state.currentRole==='admin'?adminPages:empPages;
@@ -1293,6 +1382,8 @@ function showPage(id) {
   if(id==='reports') renderReports();
   if(id==='employees') renderEmployees();
   if(id==='letters') renderMyLetters();
+  if(id==='tasks') renderTasks();
+  if(id==='security') renderSecurity();
   if(id==='settings') renderSettings();
 }
 
@@ -1660,6 +1751,95 @@ function renderReports() {
   }).join('');
 }
 
+// ═══════════ SECURITY PAGE ═══════════
+function renderSecurity() {
+  // Employee connection table
+  const tbody = document.getElementById('securityEmpTable');
+  if(!tbody) return;
+  const connLabels = {
+    'office_wifi':'🏢 Office WiFi Only',
+    'wfh':'🏠 Work From Home',
+    'regular':'🌐 Regular (Any)'
+  };
+  const connColors = {
+    'office_wifi':'rgba(245,158,11,0.15)',
+    'wfh':'rgba(99,102,241,0.15)',
+    'regular':'rgba(16,185,129,0.15)'
+  };
+  tbody.innerHTML = state.employees.map(e=>{
+    const connType = e.connType||'office_wifi';
+    const registered = state.deviceFingerprints[e.id] ? '✅ Registered' : '⚠️ Not registered';
+    const ipInfo = connType==='office_wifi' ? (state.company.officeIP||'Office IP not set') :
+                   connType==='wfh' ? (e.wfhIP||'Not registered yet') : '—';
+    return `<tr>
+      <td><strong>${e.name}</strong><br><span style="font-size:11px;color:var(--muted)">${e.role||''}</span></td>
+      <td>
+        <select onchange="updateEmpConnType('${e.id}',this.value)" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;">
+          <option value="office_wifi" ${connType==='office_wifi'?'selected':''}>🏢 Office WiFi Only</option>
+          <option value="wfh" ${connType==='wfh'?'selected':''}>🏠 Work From Home</option>
+          <option value="regular" ${connType==='regular'?'selected':''}>🌐 Regular (Any)</option>
+        </select>
+      </td>
+      <td style="font-size:12px;color:var(--muted)">${ipInfo}</td>
+      <td><span style="font-size:12px">${registered}</span></td>
+      <td>
+        ${connType==='wfh'?`<button class="btn-reject" style="font-size:11px;padding:4px 8px" onclick="resetWfhIP('${e.id}')">Reset WFH IP</button>`:''}
+        ${state.deviceFingerprints[e.id]?`<button class="btn-reject" style="font-size:11px;padding:4px 8px;margin-left:4px" onclick="clearEmpDevice('${e.id}')">Reset Device</button>`:''}
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No employees yet</td></tr>';
+
+  // Login alerts
+  renderLoginAlerts();
+}
+
+function updateEmpConnType(empId, connType) {
+  const emp = state.employees.find(e=>e.id===empId);
+  if(emp) { emp.connType=connType; autoSave(); showNotif('Connection type updated ✓','success'); renderSecurity(); }
+}
+
+function resetWfhIP(empId) {
+  const emp = state.employees.find(e=>e.id===empId);
+  if(!emp) return;
+  if(!confirm('Reset WFH IP for '+emp.name+'? They will register new IP on next login.')) return;
+  delete emp.wfhIP;
+  autoSave(); renderSecurity();
+  showNotif(emp.name+' WFH IP reset ✓','success');
+}
+
+function renderLoginAlerts() {
+  const el = document.getElementById('loginAlertsTable');
+  if(!el) return;
+  if(!state.loginAlerts||!state.loginAlerts.length){
+    el.innerHTML='<p style="padding:20px;color:var(--muted);text-align:center;">No alerts yet — all logins successful ✅</p>';
+    return;
+  }
+  const typeLabels = {
+    'connection_blocked':'🚫 Connection Blocked',
+    'device_mismatch':'📱 Device Mismatch',
+  };
+  const typeColors = {
+    'connection_blocked':'#ef4444',
+    'device_mismatch':'#f59e0b',
+  };
+  el.innerHTML = `<table>
+    <thead><tr><th>Employee</th><th>Alert Type</th><th>Message</th><th>Time</th></tr></thead>
+    <tbody>${state.loginAlerts.map(a=>`<tr>
+      <td><strong>${a.empName}</strong></td>
+      <td><span style="color:${typeColors[a.type]||'#ef4444'};font-size:12px;font-weight:600">${typeLabels[a.type]||a.type}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${a.message}</td>
+      <td style="font-size:12px;color:var(--muted);white-space:nowrap">${a.time}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function clearLoginAlerts() {
+  if(!confirm('Clear all login alerts?')) return;
+  state.loginAlerts = [];
+  autoSave(); renderLoginAlerts();
+  showNotif('Alerts cleared ✓','success');
+}
+
 // ═══════════ EMPLOYEES ═══════════
 function renderEmployees() {
   const tbody = document.getElementById('empTable');
@@ -1695,6 +1875,12 @@ function openAddModal() {
   document.getElementById('newEmpPhone').value = '';
   document.getElementById('newEmpEmail').value = '';
   document.getElementById('newEmpJoin').value = '';
+  document.getElementById('newEmpConnType').value = 'office_wifi';
+  window._tempEmpPhoto = null;
+  document.getElementById('empPhotoImg').src='';
+  document.getElementById('empPhotoImg').style.display='none';
+  document.getElementById('empPhotoIcon').style.display='block';
+  document.getElementById('empPhotoFile').value='';
   document.getElementById('addModal').classList.add('open');
 }
 
@@ -1713,6 +1899,18 @@ function openEditModal(id) {
   document.getElementById('newEmpPhone').value = e.phone||'';
   document.getElementById('newEmpEmail').value = e.email||'';
   document.getElementById('newEmpJoin').value = e.joinDate||'';
+  document.getElementById('newEmpConnType').value = e.connType||'office_wifi';
+  window._tempEmpPhoto = e.photo||null;
+  if(e.photo){
+    document.getElementById('empPhotoImg').src=e.photo;
+    document.getElementById('empPhotoImg').style.display='block';
+    document.getElementById('empPhotoIcon').style.display='none';
+  } else {
+    document.getElementById('empPhotoImg').src='';
+    document.getElementById('empPhotoImg').style.display='none';
+    document.getElementById('empPhotoIcon').style.display='block';
+  }
+  document.getElementById('empPhotoFile').value='';
   document.getElementById('addModal').classList.add('open');
 }
 
@@ -1732,25 +1930,28 @@ function saveEmployee() {
   if(editId) {
     const emp = state.employees.find(e=>e.id===editId);
     if(emp) {
-      emp.name = name; emp.username = username;
-      if(password) emp.password = password;
-      emp.dept = dept; emp.role = role; emp.salary = salary;
-      emp.phone = document.getElementById('newEmpPhone').value.trim();
-      emp.email = email;
+      emp.name=name; emp.username=username;
+      if(password) emp.password=password;
+      emp.dept=dept; emp.role=role; emp.salary=salary;
+      emp.phone=document.getElementById('newEmpPhone').value.trim();
+      emp.email=email;
+      emp.connType=document.getElementById('newEmpConnType').value;
+      if(window._tempEmpPhoto!==undefined) emp.photo=window._tempEmpPhoto;
       closeAddModal(); renderEmployees(); showNotif(name+' updated successfully!','success');
-    autoSave();
+      autoSave();
     }
   } else {
     if(!password) { showNotif('Password required for new employee','error'); return; }
-    const id = 'emp'+(Date.now());
-    const phone = document.getElementById('newEmpPhone').value.trim();
-    const joinDate = document.getElementById('newEmpJoin').value || fmtDate(new Date());
-    state.employees.push({ id, name, username, password, dept, role, salary, phone, email, joinDate });
+    const id='emp'+Date.now();
+    const phone=document.getElementById('newEmpPhone').value.trim();
+    const joinDate=document.getElementById('newEmpJoin').value||fmtDate(new Date());
+    const connType=document.getElementById('newEmpConnType').value;
+    const photo=window._tempEmpPhoto||null;
+    state.employees.push({id,name,username,password,dept,role,salary,phone,email,joinDate,connType,photo});
     closeAddModal(); renderEmployees();
     showNotif(name+' added! Opening letters... 📄','success');
     autoSave();
-    // Auto-open letter modal for newly added employee
-    setTimeout(()=>openLetterModalForEmp(id), 800);
+    setTimeout(()=>openLetterModalForEmp(id),800);
   }
 }
 
@@ -2172,14 +2373,6 @@ function renderSettings() {
     document.getElementById('signPreviewImg').style.display='block';
     document.getElementById('signPlaceholder').style.display='none';
   }
-  // Security
-  const wifiEl=document.getElementById('sWifiRestriction');
-  const ipEl=document.getElementById('sOfficeIP');
-  if(wifiEl){wifiEl.checked=c.wifiRestriction||false;document.getElementById('wifiIPField').style.display=c.wifiRestriction?'block':'none';}
-  if(ipEl) ipEl.value=c.officeIP||'';
-  const waEl=document.getElementById('sAdminWhatsApp');
-  if(waEl) waEl.value=c.adminWhatsApp||'';
-  renderDeviceList();
   previewLetterhead();
 }
 
@@ -2299,12 +2492,8 @@ function saveSettings() {
   state.company.appointOpening = document.getElementById('tplAppointOpening').value.trim();
   state.company.appointClosing = document.getElementById('tplAppointClosing').value.trim();
   state.company.appointClause = document.getElementById('tplAppointClause').value.trim();
-  // Security & WhatsApp
-  state.company.wifiRestriction = document.getElementById('sWifiRestriction')?.checked||false;
-  state.company.officeIP = (document.getElementById('sOfficeIP')?.value||'').trim();
-  state.company.adminWhatsApp = (document.getElementById('sAdminWhatsApp')?.value||'').trim().replace(/\D/g,'');
   showNotif('Company settings saved! ✓','success');
-  autoSave();
+    autoSave();
   previewLetterhead();
 }
 
@@ -2394,7 +2583,7 @@ function showNotif(msg, type='success') {
 
 // ═══════════ FIREBASE SYNC ═══════════
 async function saveToFirebase() {
-  if(!db) return;
+  if(!db) { window._pendingSave=true; return; }
   try {
     await db.collection('nitya_data').doc('main').set({
       employees: state.employees,
@@ -2403,37 +2592,63 @@ async function saveToFirebase() {
       wfhRequests: state.wfhRequests,
       leaveBalances: state.leaveBalances,
       tasks: state.tasks,
+      loginAlerts: state.loginAlerts,
       company: state.company,
       deviceFingerprints: state.deviceFingerprints,
       adminCreds: state.adminCreds,
       updatedAt: new Date().toISOString()
     });
-  } catch(e) { console.error('Firebase save error:', e); }
+    window._pendingSave = false;
+  } catch(e) { window._pendingSave=true; console.error('Firebase save error:',e); }
 }
 
 async function loadFromFirebase() {
-  if(!db) { console.warn('Firebase not available — running offline'); return; }
+  if(!db) {
+    console.warn('Firebase not available — loading from localStorage');
+    const loaded = loadFromLocalStorage();
+    if(loaded) showNotif('Loaded from local backup 💾','success');
+    return;
+  }
   try {
     showLoadingOverlay(true);
     const doc = await db.collection('nitya_data').doc('main').get();
     if(doc.exists) {
       const data = doc.data();
-      if(data.employees && data.employees.length) state.employees = data.employees;
-      if(data.attendance) state.attendance = data.attendance;
-      if(data.leaves) state.leaves = data.leaves;
-      if(data.wfhRequests) state.wfhRequests = data.wfhRequests;
-      if(data.leaveBalances) state.leaveBalances = data.leaveBalances;
-      if(data.tasks) state.tasks = data.tasks;
-      if(data.company) state.company = { ...state.company, ...data.company };
-      if(data.deviceFingerprints) state.deviceFingerprints = data.deviceFingerprints;
-      if(data.adminCreds) state.adminCreds = data.adminCreds;
-      showNotif('Data loaded from cloud ☁️','success');
-    }
+      const lsRaw = localStorage.getItem('nitya_data_backup');
+      let useFirebase = true;
+      if(lsRaw) {
+        try {
+          const lsData = JSON.parse(lsRaw);
+          if(new Date(lsData.savedAt||0) > new Date(data.updatedAt||0)) {
+            useFirebase = false;
+            loadFromLocalStorage();
+            showNotif('Local changes detected — syncing...','success');
+            window._pendingSave = true;
+            setTimeout(saveToFirebase, 1000);
+          }
+        } catch(e) {}
+      }
+      if(useFirebase) {
+        if(data.employees&&data.employees.length) state.employees=data.employees;
+        if(data.attendance) state.attendance=data.attendance;
+        if(data.leaves) state.leaves=data.leaves.filter(l=>!['emp1','emp2','emp3'].includes(l.empId));
+        if(data.wfhRequests) state.wfhRequests=data.wfhRequests;
+        if(data.leaveBalances) state.leaveBalances=data.leaveBalances;
+        if(data.tasks) state.tasks=data.tasks;
+        if(data.loginAlerts) state.loginAlerts=data.loginAlerts;
+        if(data.company) state.company={...state.company,...data.company};
+        if(data.deviceFingerprints) state.deviceFingerprints=data.deviceFingerprints;
+        if(data.adminCreds) state.adminCreds=data.adminCreds;
+        saveToLocalStorage();
+        showNotif('Data loaded from cloud ☁️','success');
+      }
+    } else { loadFromLocalStorage(); }
     showLoadingOverlay(false);
   } catch(e) {
-    console.error('Firebase load error:', e);
+    console.error('Firebase load error:',e);
     showLoadingOverlay(false);
-    showNotif('Cloud sync error — working offline','error');
+    const loaded=loadFromLocalStorage();
+    showNotif(loaded?'Offline — using local backup 💾':'Cloud sync error','error');
   }
 }
 
@@ -2449,384 +2664,48 @@ function showLoadingOverlay(show) {
   el.style.display = show ? 'flex' : 'none';
 }
 
-function autoSave() {
-  saveToFirebase();
-}
-
-// ═══════════ DEVICE FINGERPRINT ═══════════
-function getDeviceId() {
-  let id = localStorage.getItem('nitya_device_id');
-  if(!id) {
-    const nav = window.navigator, scr = window.screen;
-    const raw = [nav.userAgent,nav.language,scr.colorDepth,scr.width+'x'+scr.height,nav.hardwareConcurrency||'',nav.platform||'',new Date().getTimezoneOffset()].join('|');
-    let hash = 0;
-    for(let i=0;i<raw.length;i++){hash=((hash<<5)-hash)+raw.charCodeAt(i);hash|=0;}
-    id = 'dev_'+Math.abs(hash)+'_'+Date.now().toString(36);
-    localStorage.setItem('nitya_device_id', id);
-  }
-  return id;
-}
-function isDeviceRegistered(empId) {
-  const deviceId = getDeviceId();
-  const registered = state.deviceFingerprints[empId];
-  if(!registered) return true;
-  return registered === deviceId;
-}
-function registerDevice(empId) {
-  state.deviceFingerprints[empId] = getDeviceId();
-  autoSave();
-}
-
-// ═══════════ WIFI IP CHECK ═══════════
-async function getCurrentPublicIP() {
+function saveToLocalStorage() {
   try {
-    const res = await Promise.race([fetch('https://api.ipify.org?format=json'),new Promise((_,rej)=>setTimeout(()=>rej('timeout'),5000))]);
-    const data = await res.json(); return data.ip||null;
-  } catch(e) { return null; }
-}
-async function checkOfficeWifi() {
-  const c = state.company;
-  if(!c.wifiRestriction||!c.officeIP) return {ok:true};
-  const ip = await getCurrentPublicIP();
-  if(!ip) return {ok:false,msg:'Unable to verify network. Check internet.'};
-  if(ip!==c.officeIP) return {ok:false,msg:'Check-in allowed only on office WiFi. (Your IP: '+ip+')'};
-  return {ok:true};
+    localStorage.setItem('nitya_data_backup', JSON.stringify({
+      employees:state.employees, attendance:state.attendance, leaves:state.leaves,
+      wfhRequests:state.wfhRequests, leaveBalances:state.leaveBalances, tasks:state.tasks,
+      loginAlerts:state.loginAlerts, company:state.company,
+      deviceFingerprints:state.deviceFingerprints, adminCreds:state.adminCreds,
+      savedAt:new Date().toISOString()
+    }));
+  } catch(e) { console.warn('localStorage save failed:',e); }
 }
 
-// ═══════════ WFH ═══════════
-function getDistanceKm(lat1,lon1,lat2,lon2) {
-  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
-  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-function openWfhModal() {
-  document.getElementById('wfhDate').value=fmtDate(new Date());
-  document.getElementById('wfhReason').value='';
-  document.getElementById('wfhModal').classList.add('open');
-}
-function closeWfhModal(){document.getElementById('wfhModal').classList.remove('open');}
-function submitWfhRequest() {
-  const emp=state.currentUser.empData;
-  const date=document.getElementById('wfhDate').value;
-  const reason=document.getElementById('wfhReason').value.trim();
-  if(!date||!reason){showNotif('Please fill date and reason','error');return;}
-  state.wfhRequests.push({id:'wfh'+Date.now(),empId:emp.id,empName:emp.name,date,reason,status:'pending',requestedAt:new Date().toISOString()});
-  closeWfhModal(); showNotif('WFH request submitted! ✓','success'); autoSave();
-}
-function isWfhApprovedToday(empId) {
-  const dk=fmtDate(new Date());
-  return state.wfhRequests.some(r=>r.empId===empId&&r.date===dk&&r.status==='approved');
-}
-function approveWfh(id) {
-  const r=state.wfhRequests.find(x=>x.id===id);
-  if(r){r.status='approved';renderLeave();showNotif('WFH approved ✓','success');autoSave();}
-}
-function rejectWfh(id) {
-  const r=state.wfhRequests.find(x=>x.id===id);
-  if(r){r.status='rejected';renderLeave();showNotif('WFH rejected','success');autoSave();}
-}
-function renderWfhRequests() { renderLeave(); }
-
-// ═══════════ EARNED LEAVE BALANCE ═══════════
-function getProbationEndDate(emp) {
-  if(!emp.joinDate) return null;
-  const join=new Date(emp.joinDate);
-  const months=parseInt(state.company.probation||'3')||3;
-  const end=new Date(join); end.setMonth(end.getMonth()+months); return end;
-}
-function calculateLeaveBalance(empId) {
-  const emp=state.employees.find(e=>e.id===empId);
-  if(!emp||!emp.joinDate) return 0;
-  const now=new Date(); const probEnd=getProbationEndDate(emp);
-  if(!probEnd||now<probEnd) return 0;
-  if(!state.leaveBalances[empId]) state.leaveBalances[empId]={earnedLeave:0,lastCreditedMonth:null,lastResetYear:null};
-  const bal=state.leaveBalances[empId];
-  const currentFY=now.getMonth()>=3?now.getFullYear():now.getFullYear()-1;
-  if(bal.lastResetYear!==currentFY){bal.earnedLeave=0;bal.lastResetYear=currentFY;bal.lastCreditedMonth=null;}
-  const creditFrom=new Date(probEnd.getFullYear(),probEnd.getMonth()+1,1);
-  let creditMonth=new Date(creditFrom);
-  const nowYM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  let credited=0;
-  while(true){
-    const mKey=creditMonth.getFullYear()+'-'+String(creditMonth.getMonth()+1).padStart(2,'0');
-    if(mKey>nowYM) break;
-    if(bal.lastCreditedMonth&&mKey<=bal.lastCreditedMonth){creditMonth.setMonth(creditMonth.getMonth()+1);continue;}
-    credited++; bal.lastCreditedMonth=mKey; creditMonth.setMonth(creditMonth.getMonth()+1);
-  }
-  if(credited>0){bal.earnedLeave+=credited;autoSave();}
-  const usedEL=state.leaves.filter(l=>l.empId===empId&&l.type==='Earned Leave'&&l.status==='approved')
-    .reduce((sum,l)=>sum+Math.round((new Date(l.to)-new Date(l.from))/(1000*60*60*24))+1,0);
-  return Math.max(0,bal.earnedLeave-usedEL);
-}
-function getLeaveBalanceSummary(empId) {
-  const emp=state.employees.find(e=>e.id===empId); if(!emp) return null;
-  const probEnd=getProbationEndDate(emp); const now=new Date();
-  const inProbation=probEnd&&now<probEnd;
-  const balance=calculateLeaveBalance(empId);
-  const bal=state.leaveBalances[empId]||{};
-  const usedEL=state.leaves.filter(l=>l.empId===empId&&l.type==='Earned Leave'&&l.status==='approved')
-    .reduce((sum,l)=>sum+Math.round((new Date(l.to)-new Date(l.from))/(1000*60*60*24))+1,0);
-  return {balance,inProbation,usedEL,totalAccrued:bal.earnedLeave||0,
-    probEndDate:probEnd?probEnd.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'—'};
-}
-function resetAllLeaveBalancesMarch() {
-  const now=new Date();
-  if(now.getMonth()===3&&now.getDate()===1){
-    state.employees.forEach(e=>{
-      if(state.leaveBalances[e.id]){state.leaveBalances[e.id].earnedLeave=0;state.leaveBalances[e.id].lastCreditedMonth=null;}
-    }); autoSave();
-  }
+function loadFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem('nitya_data_backup');
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(data.employees&&data.employees.length) state.employees=data.employees;
+    if(data.attendance) state.attendance=data.attendance;
+    if(data.leaves) state.leaves=data.leaves.filter(l=>!['emp1','emp2','emp3'].includes(l.empId));
+    if(data.wfhRequests) state.wfhRequests=data.wfhRequests;
+    if(data.leaveBalances) state.leaveBalances=data.leaveBalances;
+    if(data.tasks) state.tasks=data.tasks;
+    if(data.loginAlerts) state.loginAlerts=data.loginAlerts;
+    if(data.company) state.company={...state.company,...data.company};
+    if(data.deviceFingerprints) state.deviceFingerprints=data.deviceFingerprints;
+    if(data.adminCreds) state.adminCreds=data.adminCreds;
+    return true;
+  } catch(e) { return false; }
 }
 
-// ═══════════ TASKS ═══════════
-function openTaskModal(taskId) {
-  const isAdmin=state.currentRole==='admin';
-  document.getElementById('editTaskId').value=taskId||'';
-  document.getElementById('taskModalTitle').textContent=taskId?'✏️ Edit Task':'➕ Add Task';
-  const sel=document.getElementById('taskAssignTo');
-  const myId=state.currentUser.id;
-  if(isAdmin){
-    sel.innerHTML=`<option value="${myId}">Admin (Me)</option>`+state.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
-  } else {
-    sel.innerHTML=`<option value="${myId}">${state.currentUser.name} (Me)</option>`;
+// ── Retry sync every 30 sec if pending ──
+setInterval(async()=>{
+  if(db && window._pendingSave) {
+    await saveToFirebase();
+    if(!window._pendingSave) showNotif('Data synced to cloud ☁️ ✓','success');
   }
-  if(taskId){
-    const t=state.tasks.find(x=>x.id===taskId);
-    if(t){
-      document.getElementById('taskTitle').value=t.title;
-      document.getElementById('taskDesc').value=t.desc||'';
-      document.getElementById('taskAssignTo').value=t.assignedTo;
-      document.getElementById('taskStatus').value=t.status;
-    }
-  } else {
-    document.getElementById('taskTitle').value='';
-    document.getElementById('taskDesc').value='';
-    document.getElementById('taskStatus').value='todo';
-  }
-  document.getElementById('taskModal').classList.add('open');
-}
-function closeTaskModal(){document.getElementById('taskModal').classList.remove('open');}
-function saveTask() {
-  const title=document.getElementById('taskTitle').value.trim();
-  if(!title){showNotif('Please enter task title','error');return;}
-  const editId=document.getElementById('editTaskId').value;
-  const assignedTo=document.getElementById('taskAssignTo').value;
-  const emp=state.employees.find(e=>e.id===assignedTo);
-  const assignedToName=emp?emp.name:state.currentUser.name;
-  const task={
-    id:editId||'task'+Date.now(), title,
-    desc:document.getElementById('taskDesc').value.trim(),
-    assignedTo, assignedToName,
-    assignedBy:state.currentUser.id, assignedByName:state.currentUser.name,
-    status:document.getElementById('taskStatus').value,
-    createdAt:editId?(state.tasks.find(x=>x.id===editId)?.createdAt||new Date().toISOString()):new Date().toISOString(),
-    updatedAt:new Date().toISOString(),
-  };
-  if(editId){const idx=state.tasks.findIndex(x=>x.id===editId);if(idx>-1)state.tasks[idx]=task;}
-  else state.tasks.unshift(task);
-  closeTaskModal(); renderTasks(); showNotif(editId?'Task updated ✓':'Task added ✓','success'); autoSave();
-}
-function deleteTask(id) {
-  if(!confirm('Delete this task?')) return;
-  state.tasks=state.tasks.filter(t=>t.id!==id);
-  renderTasks(); showNotif('Task deleted','success'); autoSave();
-}
-function updateTaskStatus(id,status) {
-  const t=state.tasks.find(x=>x.id===id);
-  if(t){t.status=status;t.updatedAt=new Date().toISOString();renderTasks();autoSave();}
-}
-function renderTasks() {
-  const isAdmin=state.currentRole==='admin';
-  const myId=state.currentUser.id;
-  const statsWrap=document.getElementById('taskStatsWrap');
-  if(statsWrap){
-    if(isAdmin){
-      statsWrap.style.display='block';
-      document.getElementById('tStatTotal').textContent=state.tasks.length;
-      document.getElementById('tStatTodo').textContent=state.tasks.filter(t=>t.status==='todo').length;
-      document.getElementById('tStatProgress').textContent=state.tasks.filter(t=>t.status==='inprogress').length;
-      document.getElementById('tStatDone').textContent=state.tasks.filter(t=>t.status==='done').length;
-    } else statsWrap.style.display='none';
-  }
-  const filterEmp=document.getElementById('taskFilterEmp');
-  if(filterEmp){
-    if(isAdmin){
-      filterEmp.style.display='block';
-      filterEmp.innerHTML='<option value="all">All Employees</option>'+state.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
-    } else filterEmp.style.display='none';
-  }
-  const fStatus=document.getElementById('taskFilterStatus')?.value||'all';
-  const fEmp=filterEmp?.value||'all';
-  let tasks=isAdmin?state.tasks:state.tasks.filter(t=>t.assignedTo===myId||t.assignedBy===myId);
-  if(fStatus!=='all') tasks=tasks.filter(t=>t.status===fStatus);
-  if(isAdmin&&fEmp!=='all') tasks=tasks.filter(t=>t.assignedTo===fEmp);
-  const statuses=['todo','inprogress','done'];
-  const labels={todo:'📋 Todo',inprogress:'⚡ In Progress',done:'✅ Done'};
-  const board=document.getElementById('taskBoard');
-  if(!board) return;
-  board.innerHTML='<div class="task-board-wrap">'+statuses.map(s=>{
-    const colTasks=tasks.filter(t=>t.status===s);
-    return `<div class="task-col">
-      <div class="task-col-header ${s}">${labels[s]} (${colTasks.length})</div>
-      ${colTasks.length===0?'<div style="font-size:13px;color:var(--muted);padding:16px;text-align:center;background:var(--card);border-radius:10px;">No tasks</div>':
-        colTasks.map(t=>{
-          const canEdit=isAdmin||t.assignedBy===myId||t.assignedTo===myId;
-          const nextStatus=s==='todo'?'inprogress':s==='inprogress'?'done':null;
-          const nextLabel=s==='todo'?'▶ Start':s==='inprogress'?'✓ Complete':null;
-          return `<div class="task-card">
-            <div class="tc-title">${t.title}</div>
-            ${t.desc?`<div class="tc-desc">${t.desc}</div>`:''}
-            <div class="tc-meta"><span class="task-assignee">👤 ${t.assignedToName||'—'}</span></div>
-            ${isAdmin||t.assignedBy===myId?`<div style="font-size:11px;color:var(--muted);margin-top:6px;">By: ${t.assignedByName||'—'}</div>`:''}
-            <div class="task-actions">
-              ${nextStatus?`<button class="btn-task-action" style="background:rgba(16,185,129,0.15);color:var(--accent2);" onclick="updateTaskStatus('${t.id}','${nextStatus}')">${nextLabel}</button>`:''}
-              ${s==='done'?`<button class="btn-task-action" style="background:rgba(99,102,241,0.15);color:#818cf8;" onclick="updateTaskStatus('${t.id}','inprogress')">↺ Reopen</button>`:''}
-              ${canEdit?`<button class="btn-task-action" style="background:rgba(245,158,11,0.15);color:var(--accent);" onclick="openTaskModal('${t.id}')">✏️ Edit</button>`:''}
-              ${isAdmin?`<button class="btn-task-action" style="background:rgba(239,68,68,0.1);color:#ef4444;" onclick="deleteTask('${t.id}')">🗑️</button>`:''}
-            </div>
-          </div>`;
-        }).join('')}
-    </div>`;
-  }).join('')+'</div>';
-}
+}, 30000);
 
-// ═══════════ DAILY WORK REPORT ═══════════
-function performCheckOut(reportData) {
-  const emp=state.currentUser.empData;
-  const dk=fmtDate(new Date());
-  const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  if(state.attendance[emp.id+'_'+dk]){
-    state.attendance[emp.id+'_'+dk].checkOut=t;
-    if(reportData) state.attendance[emp.id+'_'+dk].workReport=reportData;
-  }
-  renderMyAttendance(); showNotif('Checked out at '+t+' ✓','success'); autoSave();
-}
-function skipWorkReport(){document.getElementById('workReportModal').classList.remove('open');performCheckOut(null);}
-function submitWorkReport(){
-  const tasksDone=document.getElementById('wrTasksDone').value.trim();
-  const pending=document.getElementById('wrPending').value.trim();
-  const issues=document.getElementById('wrIssues').value.trim();
-  document.getElementById('workReportModal').classList.remove('open');
-  performCheckOut({tasksDone,pending,issues,submittedAt:new Date().toISOString()});
-}
-function submitAndWhatsApp(){
-  const tasksDone=document.getElementById('wrTasksDone').value.trim();
-  const pending=document.getElementById('wrPending').value.trim();
-  const issues=document.getElementById('wrIssues').value.trim();
-  const emp=state.currentUser.empData;
-  const today=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  const checkIn=state.attendance[emp.id+'_'+fmtDate(new Date())]?.checkIn||'—';
-  const msg=`📋 *Daily Work Report*\n👤 *${emp.name}* | ${emp.role||''} | ${emp.dept||''}\n📅 ${today}\n🕐 Check-In: ${checkIn} | Check-Out: ${t}\n\n✅ *Tasks Completed:*\n${tasksDone||'—'}\n\n⏳ *Pending / Tomorrow:*\n${pending||'—'}\n`+(issues?`\n💬 *Comments:*\n${issues}\n`:'')+`\n_Sent via Nitya HR_`;
-  document.getElementById('workReportModal').classList.remove('open');
-  performCheckOut({tasksDone,pending,issues,submittedAt:new Date().toISOString()});
-  const adminPhone=state.company.adminWhatsApp||'';
-  if(!adminPhone){showNotif('Admin WhatsApp not set in Settings','error');return;}
-  window.open('https://wa.me/'+adminPhone+'?text='+encodeURIComponent(msg),'_blank');
-}
-
-// ═══════════ EMPLOYEE PHOTO ═══════════
-function handleEmpPhoto(event) {
-  const file=event.target.files[0]; if(!file) return;
-  if(file.size>100*1024){showNotif('Photo must be under 100KB','error');document.getElementById('empPhotoFile').value='';return;}
-  const reader=new FileReader();
-  reader.onload=function(e){
-    window._tempEmpPhoto=e.target.result;
-    document.getElementById('empPhotoImg').src=e.target.result;
-    document.getElementById('empPhotoImg').style.display='block';
-    document.getElementById('empPhotoIcon').style.display='none';
-    showNotif('Photo uploaded ✓','success');
-  };
-  reader.readAsDataURL(file);
-}
-function showEmpPhotoOnDashboard() {
-  if(state.currentRole!=='employee') return;
-  const emp=state.currentUser.empData;
-  if(emp&&emp.photo){
-    const wrap=document.getElementById('empPhotoDash');
-    const img=document.getElementById('empPhotoDashImg');
-    if(wrap&&img){img.src=emp.photo;wrap.style.display='block';}
-  }
-}
-
-// ═══════════ WORK REPORT EXCEL EXPORT ═══════════
-function exportWorkReportExcel() {
-  const sel=document.getElementById('reportMonth');
-  const month=sel?parseInt(sel.value):new Date().getMonth();
-  const year=new Date().getFullYear();
-  const monthName=new Date(year,month,1).toLocaleString('en-IN',{month:'long'});
-  const rows=[];
-  state.employees.forEach(emp=>{
-    const daysInMonth=new Date(year,month+1,0).getDate();
-    for(let d=1;d<=daysInMonth;d++){
-      const date=new Date(year,month,d);
-      const dk=fmtDate(date);
-      const rec=state.attendance[emp.id+'_'+dk];
-      if(rec&&rec.workReport){
-        rows.push({
-          'Employee Name':emp.name,'Department':emp.dept||'','Date':dk,
-          'Day':date.toLocaleDateString('en-IN',{weekday:'long'}),
-          'Check In':rec.checkIn||'','Check Out':rec.checkOut||'',
-          'Tasks Completed':rec.workReport.tasksDone||'',
-          'Pending / Tomorrow':rec.workReport.pending||'',
-          'Comments':rec.workReport.issues||'',
-        });
-      }
-    }
-  });
-  if(!rows.length){showNotif('No work reports for '+monthName+' '+year,'error');return;}
-  const headers=Object.keys(rows[0]);
-  const csvRows=[headers.join(',')];
-  rows.forEach(row=>csvRows.push(headers.map(h=>'"'+(row[h]||'').replace(/"/g,'""')+'"').join(',')));
-  const blob=new Blob([csvRows.join('\n')],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download=`Work_Report_${monthName}_${year}.csv`; a.click();
-  URL.revokeObjectURL(url); showNotif('Work Report downloaded ✓','success');
-}
-
-// ═══════════ SECURITY SETTINGS ═══════════
-function toggleWifiField(){
-  const checked=document.getElementById('sWifiRestriction').checked;
-  document.getElementById('wifiIPField').style.display=checked?'block':'none';
-}
-async function detectMyIP(){
-  showNotif('Detecting IP...','success');
-  const ip=await getCurrentPublicIP();
-  if(ip){document.getElementById('sOfficeIP').value=ip;showNotif('IP detected: '+ip+' ✓','success');}
-  else showNotif('Could not detect IP','error');
-}
-function renderDeviceList(){
-  const el=document.getElementById('deviceList'); if(!el) return;
-  const registered=Object.keys(state.deviceFingerprints);
-  if(!registered.length){el.innerHTML='<span style="color:var(--muted)">No devices registered yet.</span>';return;}
-  el.innerHTML=registered.map(empId=>{
-    const emp=state.employees.find(e=>e.id===empId);
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
-      <span style="font-size:13px;">📱 ${emp?.name||'Unknown'} — <span style="color:var(--present)">Registered</span></span>
-      <button class="btn-reject" style="font-size:12px;padding:6px 12px;border-radius:8px;" onclick="clearEmpDevice('${empId}')">Reset</button>
-    </div>`;
-  }).join('');
-}
-function clearEmpDevice(empId){
-  const emp=state.employees.find(e=>e.id===empId);
-  if(!confirm('Reset device for '+(emp?.name||'employee')+'?')) return;
-  delete state.deviceFingerprints[empId];
-  autoSave(); renderDeviceList();
-  showNotif((emp?.name||'Employee')+' device reset ✓','success');
-}
-function resetAdminPassword(){
-  const newUser=document.getElementById('newAdminUser').value.trim();
-  const newPass=document.getElementById('newAdminPass').value.trim();
-  const confirmPass=document.getElementById('confirmAdminPass').value.trim();
-  if(!newUser||!newPass){showNotif('Please fill username and password','error');return;}
-  if(newPass!==confirmPass){showNotif('Passwords do not match!','error');return;}
-  if(newPass.length<6){showNotif('Password must be at least 6 characters','error');return;}
-  state.adminCreds.username=newUser; state.adminCreds.password=newPass;
-  document.getElementById('newAdminUser').value='';
-  document.getElementById('newAdminPass').value='';
-  document.getElementById('confirmAdminPass').value='';
-  autoSave(); showNotif('Admin credentials updated ✓','success');
+function autoSave() {
+  saveToLocalStorage();
+  saveToFirebase();
 }
 
 // Init date on topbar
@@ -2834,18 +2713,127 @@ document.getElementById('topbarDate').textContent = new Date().toLocaleDateStrin
 
 // ── Splash Screen → Firebase Load → Show Login ──
 window.addEventListener('load', async function() {
-  const splashMin = new Promise(res => setTimeout(res, 1500));
-  const firebaseLoad = Promise.race([loadFromFirebase(), new Promise(res=>setTimeout(res,4000))]);
-  await Promise.all([splashMin, firebaseLoad]);
+  try {
+    const splashMin = new Promise(res => setTimeout(res, 1500));
+    const firebaseLoad = Promise.race([loadFromFirebase(), new Promise(res=>setTimeout(res,5000))]);
+    await Promise.all([splashMin, firebaseLoad]);
+  } catch(e) { console.warn('Load error:',e); }
   const splash = document.getElementById('splashScreen');
   splash.style.transition = 'opacity 0.4s ease';
   splash.style.opacity = '0';
   setTimeout(() => {
     splash.style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('loginUser').focus();
+    if(!restoreSession()) {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('loginUser')?.focus();
+    }
   }, 400);
 });
+
+// ═══════════ SESSION RESTORE ═══════════
+function restoreSession() {
+  try {
+    const saved = localStorage.getItem('nitya_session');
+    if(!saved) return false;
+    const sess = JSON.parse(saved);
+    if(sess.role==='admin') {
+      state.currentUser={id:'admin',name:sess.name||'Admin',role:'admin'};
+      state.currentRole='admin'; state.loginRole='admin';
+    } else if(sess.role==='employee'&&sess.empId) {
+      const emp=state.employees.find(e=>e.id===sess.empId);
+      if(!emp) return false;
+      state.currentUser={id:emp.id,name:emp.name,role:'employee',empData:emp};
+      state.currentRole='employee'; state.loginRole='employee';
+    } else return false;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('topbarName').textContent=state.currentUser.name;
+    const rb=document.getElementById('roleBadge');
+    rb.textContent=state.currentRole==='admin'?'Admin':'Employee';
+    rb.className='badge '+(state.currentRole==='admin'?'admin':'employee');
+    buildNav(); showPage('dashboard'); startClock();
+    resetAllLeaveBalancesMarch();
+    setTimeout(showEmpPhotoOnDashboard,300);
+    return true;
+  } catch(e){localStorage.removeItem('nitya_session');return false;}
+}
+
+// ═══════════ DEVICE FINGERPRINT ═══════════
+function getDeviceId(){let id=localStorage.getItem('nitya_device_id');if(!id){const nav=window.navigator,scr=window.screen;const raw=[nav.userAgent,nav.language,scr.colorDepth,scr.width+'x'+scr.height,nav.hardwareConcurrency||'',nav.platform||'',new Date().getTimezoneOffset()].join('|');let hash=0;for(let i=0;i<raw.length;i++){hash=((hash<<5)-hash)+raw.charCodeAt(i);hash|=0;}id='dev_'+Math.abs(hash)+'_'+Date.now().toString(36);localStorage.setItem('nitya_device_id',id);}return id;}
+function isDeviceRegistered(empId){const r=state.deviceFingerprints[empId];return!r||r===getDeviceId();}
+function registerDevice(empId){state.deviceFingerprints[empId]=getDeviceId();autoSave();}
+
+// ═══════════ WIFI & CONNECTION ═══════════
+async function getCurrentPublicIP(){try{const res=await Promise.race([fetch('https://api.ipify.org?format=json'),new Promise((_,rej)=>setTimeout(()=>rej(),5000))]);const data=await res.json();return data.ip||null;}catch(e){return null;}}
+async function checkOfficeWifi(){const c=state.company;if(!c.wifiRestriction||!c.officeIP)return{ok:true};const ip=await getCurrentPublicIP();if(!ip)return{ok:false,msg:'Unable to verify network.'};if(ip!==c.officeIP)return{ok:false,msg:'Check-in allowed only on office WiFi. (IP: '+ip+')'};return{ok:true};}
+async function checkConnectionAllowed(emp,connType){
+  if(connType==='regular')return{ok:true};
+  const currentIP=await getCurrentPublicIP();
+  if(connType==='office_wifi'){const officeIP=state.company.officeIP;if(!officeIP)return{ok:true};if(!currentIP)return{ok:false,msg:'Cannot verify network.'};if(currentIP!==officeIP)return{ok:false,msg:`Office WiFi required. Not on office network. (IP: ${currentIP})`};return{ok:true};}
+  if(connType==='wfh'){if(!emp.wfhIP){emp.wfhIP=currentIP;autoSave();return{ok:true};}if(!currentIP)return{ok:false,msg:'Cannot verify network.'};if(currentIP!==emp.wfhIP)return{ok:false,msg:`WFH connection not recognized. (IP: ${currentIP})`};return{ok:true};}
+  return{ok:true};
+}
+function logLoginAlert(emp,type,message){state.loginAlerts.unshift({id:'alert'+Date.now(),empId:emp.id,empName:emp.name,type,message,time:new Date().toLocaleString('en-IN')});if(state.loginAlerts.length>50)state.loginAlerts=state.loginAlerts.slice(0,50);autoSave();}
+
+// ═══════════ WFH ═══════════
+function getDistanceKm(lat1,lon1,lat2,lon2){const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function openWfhModal(){document.getElementById('wfhDate').value=fmtDate(new Date());document.getElementById('wfhReason').value='';document.getElementById('wfhModal').classList.add('open');}
+function closeWfhModal(){document.getElementById('wfhModal').classList.remove('open');}
+function submitWfhRequest(){const emp=state.currentUser.empData;const date=document.getElementById('wfhDate').value;const reason=document.getElementById('wfhReason').value.trim();if(!date||!reason){showNotif('Please fill date and reason','error');return;}state.wfhRequests.push({id:'wfh'+Date.now(),empId:emp.id,empName:emp.name,date,reason,status:'pending',requestedAt:new Date().toISOString()});closeWfhModal();showNotif('WFH request submitted ✓','success');autoSave();}
+function isWfhApprovedToday(empId){const dk=fmtDate(new Date());return state.wfhRequests.some(r=>r.empId===empId&&r.date===dk&&r.status==='approved');}
+function approveWfh(id){const r=state.wfhRequests.find(x=>x.id===id);if(r){r.status='approved';renderLeave();showNotif('WFH approved ✓','success');autoSave();}}
+function rejectWfh(id){const r=state.wfhRequests.find(x=>x.id===id);if(r){r.status='rejected';renderLeave();showNotif('WFH rejected','success');autoSave();}}
+function renderWfhRequests(){renderLeave();}
+
+// ═══════════ LEAVE BALANCE ═══════════
+function getProbationEndDate(emp){if(!emp.joinDate)return null;const join=new Date(emp.joinDate);const months=parseInt(state.company.probation||'3')||3;const end=new Date(join);end.setMonth(end.getMonth()+months);return end;}
+function calculateLeaveBalance(empId){const emp=state.employees.find(e=>e.id===empId);if(!emp||!emp.joinDate)return 0;const now=new Date();const probEnd=getProbationEndDate(emp);if(!probEnd||now<probEnd)return 0;if(!state.leaveBalances[empId])state.leaveBalances[empId]={earnedLeave:0,lastCreditedMonth:null,lastResetYear:null};const bal=state.leaveBalances[empId];const currentFY=now.getMonth()>=3?now.getFullYear():now.getFullYear()-1;if(bal.lastResetYear!==currentFY){bal.earnedLeave=0;bal.lastResetYear=currentFY;bal.lastCreditedMonth=null;}const creditFrom=new Date(probEnd.getFullYear(),probEnd.getMonth()+1,1);let cm=new Date(creditFrom);const nowYM=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');let credited=0;while(true){const mKey=cm.getFullYear()+'-'+String(cm.getMonth()+1).padStart(2,'0');if(mKey>nowYM)break;if(bal.lastCreditedMonth&&mKey<=bal.lastCreditedMonth){cm.setMonth(cm.getMonth()+1);continue;}credited++;bal.lastCreditedMonth=mKey;cm.setMonth(cm.getMonth()+1);}if(credited>0){bal.earnedLeave+=credited;autoSave();}const usedEL=state.leaves.filter(l=>l.empId===empId&&l.type==='Earned Leave'&&l.status==='approved').reduce((sum,l)=>sum+Math.round((new Date(l.to)-new Date(l.from))/(1000*60*60*24))+1,0);return Math.max(0,bal.earnedLeave-usedEL);}
+function getLeaveBalanceSummary(empId){const emp=state.employees.find(e=>e.id===empId);if(!emp)return null;const probEnd=getProbationEndDate(emp);const now=new Date();const inProbation=probEnd&&now<probEnd;const balance=calculateLeaveBalance(empId);const bal=state.leaveBalances[empId]||{};const usedEL=state.leaves.filter(l=>l.empId===empId&&l.type==='Earned Leave'&&l.status==='approved').reduce((sum,l)=>sum+Math.round((new Date(l.to)-new Date(l.from))/(1000*60*60*24))+1,0);return{balance,inProbation,usedEL,totalAccrued:bal.earnedLeave||0,probEndDate:probEnd?probEnd.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'—'};}
+function resetAllLeaveBalancesMarch(){const now=new Date();if(now.getMonth()===3&&now.getDate()===1){state.employees.forEach(e=>{if(state.leaveBalances[e.id]){state.leaveBalances[e.id].earnedLeave=0;state.leaveBalances[e.id].lastCreditedMonth=null;}});autoSave();}}
+
+// ═══════════ TASKS ═══════════
+function openTaskModal(taskId){const isAdmin=state.currentRole==='admin';document.getElementById('editTaskId').value=taskId||'';document.getElementById('taskModalTitle').textContent=taskId?'✏️ Edit Task':'➕ Add Task';const sel=document.getElementById('taskAssignTo');const myId=state.currentUser.id;if(isAdmin){sel.innerHTML=`<option value="${myId}">Admin (Me)</option>`+state.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');}else{sel.innerHTML=`<option value="${myId}">${state.currentUser.name} (Me)</option>`;}if(taskId){const t=state.tasks.find(x=>x.id===taskId);if(t){document.getElementById('taskTitle').value=t.title;document.getElementById('taskDesc').value=t.desc||'';document.getElementById('taskAssignTo').value=t.assignedTo;document.getElementById('taskStatus').value=t.status;}}else{document.getElementById('taskTitle').value='';document.getElementById('taskDesc').value='';document.getElementById('taskStatus').value='todo';}document.getElementById('taskModal').classList.add('open');}
+function closeTaskModal(){document.getElementById('taskModal').classList.remove('open');}
+function saveTask(){const title=document.getElementById('taskTitle').value.trim();if(!title){showNotif('Please enter task title','error');return;}const editId=document.getElementById('editTaskId').value;const assignedTo=document.getElementById('taskAssignTo').value;const emp=state.employees.find(e=>e.id===assignedTo);const task={id:editId||'task'+Date.now(),title,desc:document.getElementById('taskDesc').value.trim(),assignedTo,assignedToName:emp?emp.name:state.currentUser.name,assignedBy:state.currentUser.id,assignedByName:state.currentUser.name,status:document.getElementById('taskStatus').value,createdAt:editId?(state.tasks.find(x=>x.id===editId)?.createdAt||new Date().toISOString()):new Date().toISOString(),updatedAt:new Date().toISOString()};if(editId){const idx=state.tasks.findIndex(x=>x.id===editId);if(idx>-1)state.tasks[idx]=task;}else state.tasks.unshift(task);closeTaskModal();renderTasks();showNotif(editId?'Task updated ✓':'Task added ✓','success');autoSave();}
+function deleteTask(id){if(!confirm('Delete this task?'))return;state.tasks=state.tasks.filter(t=>t.id!==id);renderTasks();showNotif('Task deleted','success');autoSave();}
+function updateTaskStatus(id,status){const t=state.tasks.find(x=>x.id===id);if(t){t.status=status;t.updatedAt=new Date().toISOString();renderTasks();autoSave();}}
+function renderTasks(){const isAdmin=state.currentRole==='admin';const myId=state.currentUser.id;const statsWrap=document.getElementById('taskStatsWrap');if(statsWrap){if(isAdmin){statsWrap.style.display='block';document.getElementById('tStatTotal').textContent=state.tasks.length;document.getElementById('tStatTodo').textContent=state.tasks.filter(t=>t.status==='todo').length;document.getElementById('tStatProgress').textContent=state.tasks.filter(t=>t.status==='inprogress').length;document.getElementById('tStatDone').textContent=state.tasks.filter(t=>t.status==='done').length;}else statsWrap.style.display='none';}const filterEmp=document.getElementById('taskFilterEmp');if(filterEmp){if(isAdmin){filterEmp.style.display='block';filterEmp.innerHTML='<option value="all">All Employees</option>'+state.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('');}else filterEmp.style.display='none';}const fStatus=document.getElementById('taskFilterStatus')?.value||'all';const fEmp=filterEmp?.value||'all';let tasks=isAdmin?state.tasks:state.tasks.filter(t=>t.assignedTo===myId||t.assignedBy===myId);if(fStatus!=='all')tasks=tasks.filter(t=>t.status===fStatus);if(isAdmin&&fEmp!=='all')tasks=tasks.filter(t=>t.assignedTo===fEmp);const statuses=['todo','inprogress','done'];const labels={todo:'📋 Todo',inprogress:'⚡ In Progress',done:'✅ Done'};const board=document.getElementById('taskBoard');if(!board)return;board.innerHTML='<div class="task-board-wrap">'+statuses.map(s=>{const colTasks=tasks.filter(t=>t.status===s);return`<div class="task-col"><div class="task-col-header ${s}">${labels[s]} (${colTasks.length})</div>${colTasks.length===0?'<div style="font-size:13px;color:var(--muted);padding:16px;text-align:center;background:var(--card);border-radius:10px;">No tasks</div>':colTasks.map(t=>{const canEdit=isAdmin||t.assignedBy===myId||t.assignedTo===myId;const nextStatus=s==='todo'?'inprogress':s==='inprogress'?'done':null;const nextLabel=s==='todo'?'▶ Start':s==='inprogress'?'✓ Complete':null;return`<div class="task-card"><div class="tc-title">${t.title}</div>${t.desc?`<div class="tc-desc">${t.desc}</div>`:''}<div class="tc-meta"><span class="task-assignee">👤 ${t.assignedToName||'—'}</span></div>${isAdmin||t.assignedBy===myId?`<div style="font-size:11px;color:var(--muted);margin-top:6px;">By: ${t.assignedByName||'—'}</div>`:''}<div class="task-actions">${nextStatus?`<button class="btn-task-action" style="background:rgba(16,185,129,0.15);color:var(--accent2);" onclick="updateTaskStatus('${t.id}','${nextStatus}')">${nextLabel}</button>`:''}${s==='done'?`<button class="btn-task-action" style="background:rgba(99,102,241,0.15);color:#818cf8;" onclick="updateTaskStatus('${t.id}','inprogress')">↺ Reopen</button>`:''}${canEdit?`<button class="btn-task-action" style="background:rgba(245,158,11,0.15);color:var(--accent);" onclick="openTaskModal('${t.id}')">✏️ Edit</button>`:''}${isAdmin?`<button class="btn-task-action" style="background:rgba(239,68,68,0.1);color:#ef4444;" onclick="deleteTask('${t.id}')">🗑️</button>`:''}</div></div>`;}).join('')}</div>`;}).join('')+'</div>';}
+
+// ═══════════ WORK REPORT ═══════════
+function performCheckOut(reportData){const emp=state.currentUser.empData;const dk=fmtDate(new Date());const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});if(state.attendance[emp.id+'_'+dk]){state.attendance[emp.id+'_'+dk].checkOut=t;if(reportData)state.attendance[emp.id+'_'+dk].workReport=reportData;}renderMyAttendance();showNotif('Checked out at '+t+' ✓','success');autoSave();}
+function skipWorkReport(){document.getElementById('workReportModal').classList.remove('open');performCheckOut(null);}
+function submitWorkReport(){const tasksDone=document.getElementById('wrTasksDone').value.trim();const pending=document.getElementById('wrPending').value.trim();const issues=document.getElementById('wrIssues').value.trim();document.getElementById('workReportModal').classList.remove('open');performCheckOut({tasksDone,pending,issues,submittedAt:new Date().toISOString()});}
+function submitAndWhatsApp(){const tasksDone=document.getElementById('wrTasksDone').value.trim();const pending=document.getElementById('wrPending').value.trim();const issues=document.getElementById('wrIssues').value.trim();const emp=state.currentUser.empData;const today=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});const checkIn=state.attendance[emp.id+'_'+fmtDate(new Date())]?.checkIn||'—';const msg=`📋 *Daily Work Report*\n👤 *${emp.name}* | ${emp.role||''} | ${emp.dept||''}\n📅 ${today}\n🕐 Check-In: ${checkIn} | Check-Out: ${t}\n\n✅ *Tasks Completed:*\n${tasksDone||'—'}\n\n⏳ *Pending / Tomorrow:*\n${pending||'—'}\n`+(issues?`\n💬 *Comments:*\n${issues}\n`:'')+`\n_Sent via Nitya HR_`;document.getElementById('workReportModal').classList.remove('open');performCheckOut({tasksDone,pending,issues,submittedAt:new Date().toISOString()});const adminPhone=state.company.adminWhatsApp||'';if(!adminPhone){showNotif('Admin WhatsApp not set in Settings','error');return;}window.open('https://wa.me/'+adminPhone+'?text='+encodeURIComponent(msg),'_blank');}
+
+// ═══════════ EMPLOYEE PHOTO ═══════════
+function handleEmpPhoto(event){const file=event.target.files[0];if(!file)return;if(file.size>100*1024){showNotif('Photo must be under 100KB','error');document.getElementById('empPhotoFile').value='';return;}const reader=new FileReader();reader.onload=function(e){window._tempEmpPhoto=e.target.result;document.getElementById('empPhotoImg').src=e.target.result;document.getElementById('empPhotoImg').style.display='block';document.getElementById('empPhotoIcon').style.display='none';showNotif('Photo uploaded ✓','success');};reader.readAsDataURL(file);}
+function showEmpPhotoOnDashboard(){if(state.currentRole!=='employee')return;const emp=state.currentUser.empData;if(emp&&emp.photo){const wrap=document.getElementById('empPhotoDash');const img=document.getElementById('empPhotoDashImg');if(wrap&&img){img.src=emp.photo;wrap.style.display='block';}}}
+
+// ═══════════ WORK REPORT EXCEL ═══════════
+function exportWorkReportExcel(){const sel=document.getElementById('reportMonth');const month=sel?parseInt(sel.value):new Date().getMonth();const year=new Date().getFullYear();const monthName=new Date(year,month,1).toLocaleString('en-IN',{month:'long'});const rows=[];state.employees.forEach(emp=>{const daysInMonth=new Date(year,month+1,0).getDate();for(let d=1;d<=daysInMonth;d++){const date=new Date(year,month,d);const dk=fmtDate(date);const rec=state.attendance[emp.id+'_'+dk];if(rec&&rec.workReport){rows.push({'Employee Name':emp.name,'Department':emp.dept||'','Date':dk,'Day':date.toLocaleDateString('en-IN',{weekday:'long'}),'Check In':rec.checkIn||'','Check Out':rec.checkOut||'','Tasks Completed':rec.workReport.tasksDone||'','Pending / Tomorrow':rec.workReport.pending||'','Comments':rec.workReport.issues||''});}}});if(!rows.length){showNotif('No work reports for '+monthName+' '+year,'error');return;}const headers=Object.keys(rows[0]);const csvRows=[headers.join(',')];rows.forEach(row=>csvRows.push(headers.map(h=>'"'+(row[h]||'').replace(/"/g,'""')+'"').join(',')));const blob=new Blob([csvRows.join('\n')],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Work_Report_${monthName}_${year}.csv`;a.click();URL.revokeObjectURL(url);showNotif('Work Report downloaded ✓','success');}
+
+// ═══════════ SECURITY PAGE ═══════════
+function renderSecurity(){const tbody=document.getElementById('securityEmpTable');if(!tbody)return;tbody.innerHTML=state.employees.map(e=>{const connType=e.connType||'office_wifi';const registered=state.deviceFingerprints[e.id]?'✅ Registered':'⚠️ Not registered';const ipInfo=connType==='office_wifi'?(state.company.officeIP||'Office IP not set'):connType==='wfh'?(e.wfhIP||'Not registered yet'):'—';return`<tr><td><strong>${e.name}</strong><br><span style="font-size:11px;color:var(--muted)">${e.role||''}</span></td><td><select onchange="updateEmpConnType('${e.id}',this.value)" style="padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;"><option value="office_wifi" ${connType==='office_wifi'?'selected':''}>🏢 Office WiFi Only</option><option value="wfh" ${connType==='wfh'?'selected':''}>🏠 Work From Home</option><option value="regular" ${connType==='regular'?'selected':''}>🌐 Regular (Any)</option></select></td><td style="font-size:12px;color:var(--muted)">${ipInfo}</td><td><span style="font-size:12px">${registered}</span></td><td>${connType==='wfh'?`<button class="btn-reject" style="font-size:11px;padding:4px 8px" onclick="resetWfhIP('${e.id}')">Reset WFH IP</button>`:''}${state.deviceFingerprints[e.id]?`<button class="btn-reject" style="font-size:11px;padding:4px 8px;margin-left:4px" onclick="clearEmpDevice('${e.id}')">Reset Device</button>`:''}</td></tr>`;}).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No employees yet</td></tr>';renderLoginAlerts();}
+function updateEmpConnType(empId,connType){const emp=state.employees.find(e=>e.id===empId);if(emp){emp.connType=connType;autoSave();showNotif('Connection type updated ✓','success');renderSecurity();}}
+function resetWfhIP(empId){const emp=state.employees.find(e=>e.id===empId);if(!emp)return;if(!confirm('Reset WFH IP for '+emp.name+'?'))return;delete emp.wfhIP;autoSave();renderSecurity();showNotif(emp.name+' WFH IP reset ✓','success');}
+function renderLoginAlerts(){const el=document.getElementById('loginAlertsTable');if(!el)return;if(!state.loginAlerts||!state.loginAlerts.length){el.innerHTML='<p style="padding:20px;color:var(--muted);text-align:center;">No alerts — all logins successful ✅</p>';return;}el.innerHTML=`<table><thead><tr><th>Employee</th><th>Alert Type</th><th>Message</th><th>Time</th></tr></thead><tbody>${state.loginAlerts.map(a=>`<tr><td><strong>${a.empName}</strong></td><td><span style="color:#ef4444;font-size:12px;font-weight:600">${a.type==='connection_blocked'?'🚫 Connection Blocked':'📱 Device Mismatch'}</span></td><td style="font-size:12px;color:var(--muted)">${a.message}</td><td style="font-size:12px;color:var(--muted);white-space:nowrap">${a.time}</td></tr>`).join('')}</tbody></table>`;}
+function clearLoginAlerts(){if(!confirm('Clear all login alerts?'))return;state.loginAlerts=[];autoSave();renderLoginAlerts();showNotif('Alerts cleared ✓','success');}
+
+// ═══════════ SETTINGS HELPERS ═══════════
+function toggleWifiField(){const checked=document.getElementById('sWifiRestriction').checked;document.getElementById('wifiIPField').style.display=checked?'block':'none';}
+async function detectMyIP(){showNotif('Detecting IP...','success');const ip=await getCurrentPublicIP();if(ip){document.getElementById('sOfficeIP').value=ip;showNotif('IP detected: '+ip+' ✓','success');}else showNotif('Could not detect IP','error');}
+function renderDeviceList(){const el=document.getElementById('deviceList');if(!el)return;const registered=Object.keys(state.deviceFingerprints);if(!registered.length){el.innerHTML='<span style="color:var(--muted)">No devices registered yet.</span>';return;}el.innerHTML=registered.map(empId=>{const emp=state.employees.find(e=>e.id===empId);return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);"><span style="font-size:13px;">📱 ${emp?.name||'Unknown'} — <span style="color:var(--present)">Registered</span></span><button class="btn-reject" style="font-size:12px;padding:6px 12px;border-radius:8px;" onclick="clearEmpDevice('${empId}')">Reset</button></div>`;}).join('');}
+function clearEmpDevice(empId){const emp=state.employees.find(e=>e.id===empId);if(!confirm('Reset device for '+(emp?.name||'employee')+'?'))return;delete state.deviceFingerprints[empId];autoSave();renderDeviceList();showNotif((emp?.name||'Employee')+' device reset ✓','success');}
+function resetAdminPassword(){const newUser=document.getElementById('newAdminUser').value.trim();const newPass=document.getElementById('newAdminPass').value.trim();const confirmPass=document.getElementById('confirmAdminPass').value.trim();if(!newUser||!newPass){showNotif('Fill username and password','error');return;}if(newPass!==confirmPass){showNotif('Passwords do not match!','error');return;}if(newPass.length<6){showNotif('Password min 6 characters','error');return;}state.adminCreds.username=newUser;state.adminCreds.password=newPass;document.getElementById('newAdminUser').value='';document.getElementById('newAdminPass').value='';document.getElementById('confirmAdminPass').value='';autoSave();showNotif('Admin credentials updated ✓','success');}
+
+// ═══════════ DASHBOARD DETAIL ═══════════
+function showDashDetail(type){const panel=document.getElementById('dashDetailPanel');const title=document.getElementById('dashDetailTitle');const content=document.getElementById('dashDetailContent');const dk=fmtDate(new Date());panel.style.display='block';panel.scrollIntoView({behavior:'smooth',block:'start'});if(type==='present'){title.textContent='✅ Present Today';const list=state.employees.filter(e=>state.attendance[e.id+'_'+dk]?.checkIn);content.innerHTML=list.length?`<table><thead><tr><th>Employee</th><th>Dept</th><th>Check In</th><th>Check Out</th><th>Location</th></tr></thead><tbody>${list.map(e=>{const a=state.attendance[e.id+'_'+dk];return`<tr><td>${e.name}</td><td>${e.dept||'—'}</td><td style="color:var(--present)">${a.checkIn}</td><td>${a.checkOut||'—'}</td><td style="font-size:12px;color:var(--muted)">${a.location||'—'}</td></tr>`;}).join('')}</tbody></table>`:'<p style="padding:20px;color:var(--muted);text-align:center">No employees checked in today</p>';}else if(type==='absent'){title.textContent='❌ Absent Today';const list=state.employees.filter(e=>{const a=state.attendance[e.id+'_'+dk];const lv=state.leaves.find(l=>l.empId===e.id&&l.from<=dk&&l.to>=dk&&l.status==='approved');return!lv&&!(a&&a.checkIn);});content.innerHTML=list.length?`<table><thead><tr><th>Employee</th><th>Department</th><th>Role</th><th>Contact</th></tr></thead><tbody>${list.map(e=>`<tr><td>${e.name}</td><td>${e.dept||'—'}</td><td>${e.role||'—'}</td><td style="font-size:12px;color:var(--muted)">${e.phone||e.email||'—'}</td></tr>`).join('')}</tbody></table>`:'<p style="padding:20px;color:var(--muted);text-align:center">No absent employees</p>';}else if(type==='onleave'){title.textContent='🏖️ On Leave Today';const leavesToday=state.leaves.filter(l=>l.from<=dk&&l.to>=dk&&l.status==='approved');content.innerHTML=leavesToday.length?`<table><thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th></tr></thead><tbody>${leavesToday.map(l=>`<tr><td>${l.empName}</td><td style="color:var(--leave)">${l.type}</td><td>${l.from}</td><td>${l.to}</td><td style="font-size:12px;color:var(--muted)">${l.reason}</td></tr>`).join('')}</tbody></table>`:'<p style="padding:20px;color:var(--muted);text-align:center">No approved leaves today</p>';}else if(type==='pending'){title.textContent='⏳ Pending Leave Requests';const pendingLeaves=state.currentRole==='admin'?state.leaves.filter(l=>l.status==='pending'):state.leaves.filter(l=>l.empId===state.currentUser.id&&l.status==='pending');content.innerHTML=pendingLeaves.length?`<table><thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th>${state.currentRole==='admin'?'<th>Actions</th>':''}</tr></thead><tbody>${pendingLeaves.map(l=>`<tr><td>${l.empName}</td><td>${l.type}</td><td>${l.from}</td><td>${l.to}</td><td style="font-size:12px;color:var(--muted)">${l.reason}</td>${state.currentRole==='admin'?`<td style="white-space:nowrap"><button class="btn-approve" onclick="updateLeave('${l.id}','approved');renderDashboard();showDashDetail('pending')">Approve</button><button class="btn-reject" style="margin-left:4px" onclick="updateLeave('${l.id}','rejected');renderDashboard();showDashDetail('pending')">Reject</button></td>`:''}</tr>`).join('')}</tbody></table>`:'<p style="padding:20px;color:var(--muted);text-align:center">No pending requests</p>';}else if(type==='rejected'){title.textContent='🚫 Rejected Leaves';const rejectedLeaves=state.currentRole==='admin'?state.leaves.filter(l=>l.status==='rejected'):state.leaves.filter(l=>l.empId===state.currentUser.id&&l.status==='rejected');content.innerHTML=rejectedLeaves.length?`<table><thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th></tr></thead><tbody>${rejectedLeaves.map(l=>`<tr><td>${l.empName}</td><td>${l.type}</td><td>${l.from}</td><td>${l.to}</td><td style="font-size:12px;color:var(--muted)">${l.reason}</td></tr>`).join('')}</tbody></table>`:'<p style="padding:20px;color:var(--muted);text-align:center">No rejected requests</p>';}}
+function hideDashDetail(){document.getElementById('dashDetailPanel').style.display='none';}
+
+// ═══════════ localStorage BACKUP ═══════════
+function saveToLocalStorage(){try{localStorage.setItem('nitya_data_backup',JSON.stringify({employees:state.employees,attendance:state.attendance,leaves:state.leaves,wfhRequests:state.wfhRequests,leaveBalances:state.leaveBalances,tasks:state.tasks,loginAlerts:state.loginAlerts,company:state.company,deviceFingerprints:state.deviceFingerprints,adminCreds:state.adminCreds,savedAt:new Date().toISOString()}));}catch(e){console.warn('localStorage save failed:',e);}}
+function loadFromLocalStorage(){try{const raw=localStorage.getItem('nitya_data_backup');if(!raw)return false;const data=JSON.parse(raw);if(data.employees&&data.employees.length)state.employees=data.employees;if(data.attendance)state.attendance=data.attendance;if(data.leaves)state.leaves=data.leaves.filter(l=>!['emp1','emp2','emp3'].includes(l.empId));if(data.wfhRequests)state.wfhRequests=data.wfhRequests;if(data.leaveBalances)state.leaveBalances=data.leaveBalances;if(data.tasks)state.tasks=data.tasks;if(data.loginAlerts)state.loginAlerts=data.loginAlerts;if(data.company)state.company={...state.company,...data.company};if(data.deviceFingerprints)state.deviceFingerprints=data.deviceFingerprints;if(data.adminCreds)state.adminCreds=data.adminCreds;return true;}catch(e){return false;}}
+setInterval(async()=>{if(db&&window._pendingSave){await saveToFirebase();if(!window._pendingSave)showNotif('Data synced to cloud ☁️ ✓','success');}},30000);
 
 
 </script>
